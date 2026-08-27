@@ -78,34 +78,38 @@ export default function SetupView({ onSessionStart }) {
         <div className="absolute inset-0 bg-gradient-to-t from-aivora-bg via-transparent to-transparent z-10 pointer-events-none"></div>
 
         {/* Overlay HTML Content */}
-        <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16">
-          <motion.div
-            custom={0} variants={fadeUpVariants} initial="hidden" animate="visible"
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20 mb-6 backdrop-blur-sm"
-          >
-            <GitBranch className="h-4 w-4 text-slate-300" />
-            <span className="text-sm font-medium text-gray-200">
-              Generative Development Platform
-            </span>
-          </motion.div>
+        <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16 h-full justify-between pb-24">
+          
+          <div className="flex flex-col items-center mt-12">
+            <motion.div
+              custom={0} variants={fadeUpVariants} initial="hidden" animate="visible"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20 mb-6 backdrop-blur-sm"
+            >
+              <GitBranch className="h-4 w-4 text-aivora-accent" />
+              <span className="text-sm font-medium tracking-[0.2em] text-[#A0A0A0] uppercase">
+                Intelligence 2.0 — First Preview
+              </span>
+            </motion.div>
 
-          <motion.h1
-            custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
-            className="text-6xl md:text-8xl font-bold tracking-[-0.03em] mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 max-w-[1000px] leading-[1.1]"
-          >
-            Fractal Bloom
-          </motion.h1>
+            <motion.h1
+              custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
+              className="text-6xl md:text-8xl font-semibold tracking-[-0.03em] mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 max-w-[1000px] leading-[1.1]"
+            >
+              Ledger Agent
+            </motion.h1>
 
-          <motion.p
-            custom={2} variants={fadeUpVariants} initial="hidden" animate="visible"
-            className="max-w-2xl mx-auto text-[17px] md:text-[18px] text-gray-400 mb-10 leading-relaxed font-normal"
-          >
-            An evolutionary framework that grows and adapts your code, creating complex, resilient, and beautiful software systems organically.
-          </motion.p>
+            <motion.p
+              custom={2} variants={fadeUpVariants} initial="hidden" animate="visible"
+              className="max-w-2xl mx-auto text-[17px] md:text-[18px] text-gray-400 mb-10 leading-relaxed font-normal"
+            >
+              Deploy intelligent agents that reason over your data, execute statistical workflows, 
+              and turn complex information into actionable, validated results.
+            </motion.p>
+          </div>
 
           <motion.div
             custom={3} variants={fadeUpVariants} initial="hidden" animate="visible"
-            className="relative flex justify-center group"
+            className="relative flex justify-center group mt-auto"
           >
             {/* Animated blurred background blob to create refraction effect for the liquid button */}
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-emerald-500 to-blue-500 rounded-full blur-[30px] opacity-40 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div>
