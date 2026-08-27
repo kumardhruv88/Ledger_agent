@@ -80,13 +80,29 @@ export default function SetupView({ onSessionStart }) {
         {/* Overlay HTML Content */}
         <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16 h-full justify-between pb-24">
           
-          <div className="flex flex-col items-center mt-32">
+          <div className="flex flex-col items-center mt-12">
+            <motion.div
+              custom={0} variants={fadeUpVariants} initial="hidden" animate="visible"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20 mb-6 backdrop-blur-sm"
+            >
+              <GitBranch className="h-4 w-4 text-slate-300" />
+              <span className="text-sm font-medium text-gray-200">
+                Generative Development Platform
+              </span>
+            </motion.div>
+
+            <motion.h1
+              custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
+              className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400"
+            >
+              Fractal Bloom
+            </motion.h1>
+
             <motion.p
               custom={2} variants={fadeUpVariants} initial="hidden" animate="visible"
-              className="max-w-2xl mx-auto text-[17px] md:text-[18px] text-gray-400 mb-10 leading-relaxed font-normal"
+              className="max-w-2xl mx-auto text-lg text-gray-400 mb-10"
             >
-              Deploy intelligent agents that reason over your data, execute statistical workflows, 
-              and turn complex information into actionable, validated results.
+              An evolutionary framework that grows and adapts your code, creating complex, resilient, and beautiful software systems organically.
             </motion.p>
           </div>
 
