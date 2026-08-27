@@ -77,8 +77,17 @@ export default function SetupView({ onSessionStart }) {
           and turn complex information into actionable, validated results.
         </p>
 
-        <div className="mt-8">
-          <LiquidButton size="xl" className="text-[16px] px-10 border border-white/20">
+        <div className="mt-8 relative flex justify-center group">
+          {/* Animated blurred background blob to create refraction effect for the liquid button */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-emerald-500 to-blue-500 rounded-full blur-[30px] opacity-40 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div>
+          
+          <LiquidButton 
+            size="xl" 
+            className="text-[16px] px-10 border border-white/20 z-10"
+            onClick={() => {
+              window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+            }}
+          >
             Deploy Your Agent
           </LiquidButton>
         </div>
