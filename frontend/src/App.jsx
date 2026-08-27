@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SetupView from './components/SetupView';
 import LivePipelineView from './components/LivePipelineView';
 import DashboardView from './components/DashboardView';
+import LandingContent from './components/LandingContent';
 
 export default function App() {
   const [sessionId, setSessionId] = useState(null);
@@ -50,7 +51,10 @@ export default function App() {
 
       <main className="w-full flex flex-col items-center justify-start pb-20">
         {currentView === 'setup' && (
-          <SetupView onSessionStart={handleSessionStart} />
+          <>
+            <SetupView onSessionStart={handleSessionStart} />
+            <LandingContent />
+          </>
         )}
         
         {currentView === 'pipeline' && (
