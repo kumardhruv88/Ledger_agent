@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Link as LinkIcon, FileText, Database, Activity, Cpu } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { LiquidButton } from './ui/liquid-glass-button';
 
 export default function SetupView({ onSessionStart }) {
   const [sheetUrl, setSheetUrl] = useState('');
@@ -76,9 +77,11 @@ export default function SetupView({ onSessionStart }) {
           and turn complex information into actionable, validated results.
         </p>
 
-        <button className="mt-8 btn-primary px-8 py-3.5 text-[15px]">
-          Deploy Your Agent
-        </button>
+        <div className="mt-8">
+          <LiquidButton size="xl" className="text-[16px] px-10 border border-white/20">
+            Deploy Your Agent
+          </LiquidButton>
+        </div>
       </div>
 
       {/* Agent Flow Visual Network (Compressed Spacing) */}
