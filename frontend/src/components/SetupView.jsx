@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Link as LinkIcon, FileText, Database, Activity, Cpu } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileText, Database, Activity, Cpu, GitBranch } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 import { LiquidButton } from './ui/liquid-glass-button';
+import { FractalBloomCanvas } from './ui/fractal-bloom-canvas';
 
 export default function SetupView({ onSessionStart }) {
   const [sheetUrl, setSheetUrl] = useState('');
@@ -54,42 +56,70 @@ export default function SetupView({ onSessionStart }) {
     }
   };
 
+  const fadeUpVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.2 + 1.5, // Delay for fractal to grow
+        duration: 0.8,
+        ease: "easeInOut",
+      },
+    }),
+  };
+
   return (
-    <div className="flex flex-col items-center justify-start w-full min-h-screen pt-16 pb-32">
+    <div className="flex flex-col items-center justify-start w-full min-h-screen pb-32">
       
-      {/* Eyebrow Badge */}
-      <div className="flex items-center space-x-2 px-3 py-1 mb-6 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
-        <div className="w-1.5 h-1.5 rounded-full bg-aivora-accent shadow-[0_0_8px_rgba(14,165,233,0.8)]"></div>
-        <span className="text-[11px] font-medium tracking-[0.2em] text-[#A0A0A0] uppercase">
-          Intelligence 2.0 — First Preview
-        </span>
-      </div>
+      {/* Fractal Bloom Hero Section */}
+      <div className="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+        <FractalBloomCanvas />
+        <div className="absolute inset-0 bg-gradient-to-t from-aivora-bg via-transparent to-transparent z-10 pointer-events-none"></div>
 
-      {/* Hero Typography */}
-      <div className="text-center flex flex-col items-center z-10">
-        <h1 className="text-[64px] md:text-[88px] leading-[1] font-semibold tracking-[-0.03em] text-center max-w-[1000px]">
-          <span className="text-gradient">Intelligent Agents.</span><br />
-          <span className="text-[#f5f5f5]">Real Results.</span>
-        </h1>
-        
-        <p className="mt-6 text-[17px] md:text-[18px] leading-relaxed text-[#7a7a7a] max-w-[600px] text-center font-normal">
-          Deploy intelligent agents that reason over your data, execute statistical workflows, 
-          and turn complex information into actionable, validated results.
-        </p>
-
-        <div className="mt-8 relative flex justify-center group">
-          {/* Animated blurred background blob to create refraction effect for the liquid button */}
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-emerald-500 to-blue-500 rounded-full blur-[30px] opacity-40 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div>
-          
-          <LiquidButton 
-            size="xl" 
-            className="text-[16px] px-10 border border-white/20 z-10"
-            onClick={() => {
-              window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
-            }}
+        {/* Overlay HTML Content */}
+        <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16">
+          <motion.div
+            custom={0} variants={fadeUpVariants} initial="hidden" animate="visible"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20 mb-6 backdrop-blur-sm"
           >
-            Deploy Your Agent
-          </LiquidButton>
+            <GitBranch className="h-4 w-4 text-slate-300" />
+            <span className="text-sm font-medium text-gray-200">
+              Generative Development Platform
+            </span>
+          </motion.div>
+
+          <motion.h1
+            custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
+            className="text-6xl md:text-8xl font-bold tracking-[-0.03em] mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 max-w-[1000px] leading-[1.1]"
+          >
+            Fractal Bloom
+          </motion.h1>
+
+          <motion.p
+            custom={2} variants={fadeUpVariants} initial="hidden" animate="visible"
+            className="max-w-2xl mx-auto text-[17px] md:text-[18px] text-gray-400 mb-10 leading-relaxed font-normal"
+          >
+            An evolutionary framework that grows and adapts your code, creating complex, resilient, and beautiful software systems organically.
+          </motion.p>
+
+          <motion.div
+            custom={3} variants={fadeUpVariants} initial="hidden" animate="visible"
+            className="relative flex justify-center group"
+          >
+            {/* Animated blurred background blob to create refraction effect for the liquid button */}
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-emerald-500 to-blue-500 rounded-full blur-[30px] opacity-40 group-hover:opacity-100 transition-opacity duration-700 animate-pulse"></div>
+            
+            <LiquidButton 
+              size="xl" 
+              className="text-[16px] px-10 border border-white/20 z-10"
+              onClick={() => {
+                window.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+              }}
+            >
+              Deploy Your Agent
+            </LiquidButton>
+          </motion.div>
         </div>
       </div>
 
