@@ -6,21 +6,21 @@ const UNSPLASH = (id) => `https://images.unsplash.com/photo-${id}?w=640&h=640&fi
 const AGENT_SLIDES = [
   {
     id: 1,
-    imageSrc: UNSPLASH("1551288049-bebda4e38f71"), // Abstract tech/data
+    imageSrc: UNSPLASH("1550751827-4bd374c3f58b"), // Abstract dark tech
     title: "A1 Profiler",
     tag: "Deterministic",
     description: "Generates deterministic descriptive statistics: cardinality, missingness, outliers, and candidate keys without LLM hallucinations.",
   },
   {
     id: 2,
-    imageSrc: UNSPLASH("1451187580459-43490279c0fa"), // Abstract network
+    imageSrc: UNSPLASH("1451187580459-43490279c0fa"), // Abstract network / earth
     title: "A2 Proposer",
     tag: "Model",
     description: "Reads the profile and proposes strictly testable hypotheses in natural language. Driven by injected domain knowledge.",
   },
   {
     id: 3,
-    imageSrc: UNSPLASH("1526374965328-7f61d4dc18c5"), // Abstract matrix/lock
+    imageSrc: UNSPLASH("1526374965328-7f61d4dc18c5"), // Lock / Grid
     title: "A3 Registrar",
     tag: "Deterministic",
     description: "Freezes all candidate hypotheses and their intended statistical tests before any execution begins to prevent p-hacking.",
@@ -34,14 +34,14 @@ const AGENT_SLIDES = [
   },
   {
     id: 5,
-    imageSrc: UNSPLASH("1550751827-4bd374c3f58b"), // Abstract structure
+    imageSrc: UNSPLASH("1551288049-bebda4e38f71"), // Data/Nodes
     title: "A5 Statistician",
     tag: "Deterministic",
     description: "Checks assumptions (e.g. Shapiro-Wilk), picks the test, computes effect sizes, and applies Benjamini-Hochberg FDR correction.",
   },
   {
     id: 6,
-    imageSrc: UNSPLASH("1504868584819-f818b4d8a9e7"), // Abstract light
+    imageSrc: UNSPLASH("1614064641983-4005pi68434"), // Server light
     title: "A6 Reporter",
     tag: "Model",
     description: "Compiles the final prose. Strictly constrained to surviving claims—sentences without a ledger entry are structurally rejected.",
@@ -51,28 +51,28 @@ const AGENT_SLIDES = [
 const FEATURE_SLIDES = [
   {
     id: "f1",
-    imageSrc: UNSPLASH("1614064641983-4005pi68434"), // Server abstract
+    imageSrc: UNSPLASH("1558494949-ef010cbdcc31"), // Lock / Blueprint abstract
     title: "Fully Offline & Private",
     tag: "Security",
     description: "Runs entirely on your local machine using open-weight models (Ollama). No API keys, no network access, no data egress. Perfect for highly confidential clinical or financial datasets."
   },
   {
     id: "f2",
-    imageSrc: UNSPLASH("1558494949-ef010cbdcc31"), // Lock / Blueprint abstract
+    imageSrc: UNSPLASH("1509095400922-8eb78b27f311"), // Circuit / Logic
     title: "Hypothesis Pre-registration",
     tag: "Integrity",
     description: "The model proposes hypotheses before any execution begins. The registry is frozen, making post-hoc selective reporting (p-hacking) structurally impossible."
   },
   {
     id: "f3",
-    imageSrc: UNSPLASH("1509095400922-8eb78b27f311"), // Circuit / Logic
+    imageSrc: UNSPLASH("1550751827-4bd374c3f58b"), // Abstract dark tech
     title: "Deterministic Adjudication",
     tag: "Execution",
     description: "The language model proposes, but deterministic statistics decides. Test selection, effect-size estimation, and False Discovery Rate (FDR) correction are handled entirely by code."
   },
   {
     id: "f4",
-    imageSrc: UNSPLASH("1451187580459-43490279c0fa"), // Node network
+    imageSrc: UNSPLASH("1451187580459-43490279c0fa"), // Node network / earth
     title: "Claim-Level Provenance",
     tag: "Traceability",
     description: "Every sentence in the final report is cryptographically bound to the code that executed it, the values returned, and the test that licensed it. Unbacked narration is rejected."
@@ -109,8 +109,8 @@ export default function LandingContent() {
             intervalMs={4000}
             pauseOnHover={true}
             showDots={true}
-            cardWidth={520}
-            cardHeight={320}
+            cardWidth={440}
+            cardHeight={280}
           />
         </div>
       </section>
@@ -129,8 +129,8 @@ export default function LandingContent() {
             intervalMs={3000}
             pauseOnHover={true}
             showDots={true}
-            cardWidth={520}
-            cardHeight={320}
+            cardWidth={440}
+            cardHeight={280}
             className="pb-16"
           />
         </div>
