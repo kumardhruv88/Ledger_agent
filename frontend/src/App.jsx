@@ -22,24 +22,33 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-aivora-bg text-white font-sans selection:bg-aivora-accent/30 selection:text-white">
-      {/* Top Navbar */}
-      <nav className="w-full border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      {/* Minimal Navigation */}
+      <nav className="w-full relative z-50">
+        <div className="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between border-b border-white/[0.04]">
+          {/* Logo */}
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded bg-gradient-to-tr from-blue-600 to-emerald-400 flex items-center justify-center font-bold">
-              L
-            </div>
-            <span className="font-semibold tracking-wide text-lg text-white">Ledger <span className="text-gray-500 font-normal">v2</span></span>
+            <span className="font-semibold tracking-tight text-[17px] text-white">Ledger</span>
           </div>
-          <div className="flex space-x-6 text-sm font-medium text-gray-400">
-            <button className="hover:text-white transition-colors">Home</button>
-            <button className="hover:text-white transition-colors">Agents</button>
-            <button className="hover:text-white transition-colors">Observability</button>
+          
+          {/* Center Links */}
+          <div className="hidden md:flex items-center space-x-10 text-[14px] font-medium text-[#A0A0A0]">
+            <button className="text-white transition-colors cursor-default">Home</button>
+            <button className="hover:text-white transition-colors">AI Agents</button>
+            <button className="hover:text-white transition-colors">About</button>
+            <button className="hover:text-white transition-colors">Blog</button>
+            <button className="hover:text-white transition-colors">Pricing</button>
+          </div>
+          
+          {/* CTA */}
+          <div className="flex items-center">
+            <button className="px-5 py-2.5 bg-transparent border border-white/10 hover:border-white/30 rounded-md text-[14px] font-medium text-white transition-all duration-300">
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="w-full flex flex-col items-center justify-start pb-20">
         {currentView === 'setup' && (
           <SetupView onSessionStart={handleSessionStart} />
         )}
