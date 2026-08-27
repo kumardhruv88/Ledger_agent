@@ -81,16 +81,6 @@ export default function SetupView({ onSessionStart }) {
         <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16 h-full justify-between pb-24">
           
           <div className="flex flex-col items-center mt-12">
-            <motion.div
-              custom={0} variants={fadeUpVariants} initial="hidden" animate="visible"
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-500/10 border border-slate-500/20 mb-6 backdrop-blur-sm"
-            >
-              <GitBranch className="h-4 w-4 text-aivora-accent" />
-              <span className="text-sm font-medium tracking-[0.2em] text-[#A0A0A0] uppercase">
-                Intelligence 2.0 — First Preview
-              </span>
-            </motion.div>
-
             <motion.h1
               custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
               className="text-6xl md:text-8xl font-semibold tracking-[-0.03em] mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 max-w-[1000px] leading-[1.1]"
@@ -128,7 +118,7 @@ export default function SetupView({ onSessionStart }) {
       </div>
 
       {/* Agent Flow Visual Network (Compressed Spacing) */}
-      <div className="relative mt-8 w-full max-w-[1000px] h-[500px] flex items-center justify-center">
+      <div className="relative -mt-32 w-full max-w-[1000px] h-[500px] flex items-center justify-center z-10">
         
         {/* Connection Lines (SVG) - Branched cleanly like Aivora */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
