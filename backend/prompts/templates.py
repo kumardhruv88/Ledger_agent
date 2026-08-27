@@ -197,8 +197,28 @@ ACTIVE_PROMPTS = {
 
 
 def get_prompt(key: str) -> str:
-    """Returns the currently active prompt template for the given key."""
-    return ACTIVE_PROMPTS.get(key, "")
+    """Returns the currently active prompt template for the given key, injecting Knowledge Base for system prompts."""
+    prompt = ACTIVE_PROMPTS.get(key, "")
+    
+    if key.endswith("_SYSTEM"):
+        agent_prefix = key.split("_")[0] 
+        from knowledge.agent_knowledge import get_agent_knowledge
+        
+        agent_mapping = {
+            "A2": "A2_PROPOSER",
+            "A4": "A4_EXECUTOR",
+            "A5": "A5_STATISTICIAN",
+            "A6": "A6_REPORTER",
+            "A7": "A7_ADVERSARY",
+            "A8": "A8_META"
+        }
+        
+        if agent_prefix in agent_mapping:
+            kb = get_agent_knowledge(agent_mapping[agent_prefix])
+            if kb:
+                prompt += "\n\n" + kb
+                
+    return prompt
 
 
 def update_prompt(key: str, new_template: str) -> None:

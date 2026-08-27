@@ -35,6 +35,7 @@ from core.state_machine import run_pipeline
 from agents.a9_sql_converter import run as run_sql
 from agents.a8_meta_agent import run as run_meta_agent
 from rag.document_ingestor import parse_document, build_rag_context
+from connectors.google_sheets import fetch_from_url
 from observability.models import create_tables
 
 load_dotenv()
@@ -100,6 +101,9 @@ class MetaAgentResponse(BaseModel):
     total_improvements: int
     run_at: str
 
+class ConnectSheetRequest(BaseModel):
+    url: str
+    user_hypotheses: Optional[List[str]] = None
 
 # ─── Health ───────────────────────────────────────────────────────────────────
 
@@ -189,6 +193,38 @@ async def upload_and_analyze(
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",    # Needed for Nginx/Render
+        },
+    )
+
+
+@app.post("/api/sessions/{session_id}/connect-sheet")
+async def connect_google_sheet(session_id: str, request: ConnectSheetRequest):
+    """
+    Connect to a Google Sheet or Drive CSV via URL.
+    Streams the full pipeline as Server-Sent Events.
+    """
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    try:
+        # Fetch file bytes and inferred filename from the connector
+        file_bytes, filename = fetch_from_url(request.url)
+    except Exception as e:
+        logger.error(f"Failed to fetch sheet: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    async def event_stream():
+        async for event in run_pipeline(ledger, file_bytes, filename, request.user_hypotheses):
+            session_store.update(ledger)   # Persist state after each step
+            yield event
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
         },
     )
 

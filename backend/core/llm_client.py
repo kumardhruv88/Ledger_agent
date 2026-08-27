@@ -13,6 +13,8 @@ import json
 import logging
 from typing import Optional, Tuple
 
+from observability.langsmith_tracer import trace_llm_call
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +38,7 @@ def call_llm(
     # ── Try Groq first ────────────────────────────────────────────────────────
     if model == "groq" and groq_key:
         for attempt in range(retries):
+            start_time = time.perf_counter()
             try:
                 from groq import Groq
                 client = Groq(api_key=groq_key)
@@ -55,7 +58,21 @@ def call_llm(
                 response = client.chat.completions.create(**kwargs)
                 text = response.choices[0].message.content or ""
                 tokens = response.usage.total_tokens if response.usage else 0
+                latency = (time.perf_counter() - start_time) * 1000 if 'start_time' in locals() else 0
                 logger.info(f"[Groq] tokens={tokens}")
+                
+                # Trace LLM call
+                session_id = "unknown"  # Will be extracted contextually if needed or passed via kwargs in future
+                trace_llm_call(
+                    agent_name="Agent",
+                    prompt=system_prompt + "\n\n" + user_prompt,
+                    response=text,
+                    tokens=tokens,
+                    latency_ms=latency,
+                    session_id=session_id,
+                    model="groq/llama-3.3-70b-versatile"
+                )
+                
                 return text.strip(), tokens
 
             except Exception as e:
@@ -65,6 +82,7 @@ def call_llm(
     # ── Fallback to Gemini ────────────────────────────────────────────────────
     if gemini_key:
         for attempt in range(retries):
+            start_time = time.perf_counter()
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=gemini_key)
@@ -74,7 +92,19 @@ def call_llm(
                 text = resp.text or ""
                 # Gemini doesn't always give token count in free tier
                 tokens = len(full_prompt.split()) + len(text.split())
+                latency = (time.perf_counter() - start_time) * 1000
                 logger.info(f"[Gemini] approx_tokens={tokens}")
+                
+                trace_llm_call(
+                    agent_name="Agent",
+                    prompt=full_prompt,
+                    response=text,
+                    tokens=tokens,
+                    latency_ms=latency,
+                    session_id="unknown",
+                    model="gemini/gemini-1.5-flash"
+                )
+                
                 return text.strip(), tokens
             except Exception as e:
                 logger.warning(f"[Gemini] attempt {attempt+1} failed: {e}")
