@@ -1,0 +1,381 @@
+"""
+Ledger Backend — FastAPI Entry Point
+======================================
+Production-ready REST + SSE API.
+All routes are prefixed with /api.
+
+Endpoints:
+  POST /api/sessions/create          - Create a new analysis session
+  POST /api/sessions/{id}/upload     - Upload CSV/Excel (triggers full pipeline via SSE)
+  GET  /api/sessions/{id}/status     - Get current ledger state
+  GET  /api/sessions/{id}/report     - Get final HTML report + dashboard
+  POST /api/sessions/{id}/sql        - Run NL→SQL query
+  POST /api/sessions/{id}/hypotheses - Add user-defined hypotheses
+  POST /api/sessions/{id}/chat       - Multi-turn conversational follow-up
+  GET  /api/admin/sessions           - List all active sessions
+  POST /api/admin/meta-agent/run     - Trigger A8 self-improvement cycle manually
+  GET  /api/health                   - Health check
+"""
+import asyncio
+import json
+import logging
+import os
+from contextlib import asynccontextmanager
+from typing import List, Optional
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from core.ledger import PipelineStage
+from core.session_store import session_store
+from core.state_machine import run_pipeline
+from agents.a9_sql_converter import run as run_sql
+from agents.a8_meta_agent import run as run_meta_agent
+from rag.document_ingestor import parse_document, build_rag_context
+from observability.models import create_tables
+
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# ─── Lifespan ─────────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup/shutdown tasks."""
+    logger.info("Starting Ledger API...")
+    create_tables()
+    logger.info("Telemetry database initialized.")
+    yield
+    logger.info("Ledger API shutting down.")
+
+
+# ─── App ──────────────────────────────────────────────────────────────────────
+
+app = FastAPI(
+    title="Ledger API",
+    description=(
+        "Multi-agent statistical analysis engine. "
+        "LLM proposes, deterministic statistics decides. "
+        "No hallucination. No p-hacking."
+    ),
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # Restrict in production to your Vercel domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ─── Request/Response Models ───────────────────────────────────────────────────
+
+class CreateSessionResponse(BaseModel):
+    session_id: str
+    message: str
+
+class SQLQueryRequest(BaseModel):
+    query: str
+
+class HypothesesRequest(BaseModel):
+    hypotheses: List[str]
+
+class ChatRequest(BaseModel):
+    message: str
+
+class MetaAgentResponse(BaseModel):
+    improvements_made: List[dict]
+    total_improvements: int
+    run_at: str
+
+
+# ─── Health ───────────────────────────────────────────────────────────────────
+
+@app.get("/")
+def root():
+    return {
+        "name": "Ledger API",
+        "status": "running",
+        "version": "1.0.0",
+        "description": "Multi-agent statistical analysis. No hallucination.",
+    }
+
+@app.get("/api/health")
+def health():
+    return {
+        "status": "healthy",
+        "groq_configured": bool(os.getenv("GROQ_API_KEY")),
+        "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
+        "active_sessions": len(session_store.list_sessions()),
+    }
+
+
+# ─── Sessions ─────────────────────────────────────────────────────────────────
+
+@app.post("/api/sessions/create", response_model=CreateSessionResponse)
+def create_session():
+    """Create a new analysis session."""
+    ledger = session_store.create()
+    logger.info(f"Created session: {ledger.session_id}")
+    return CreateSessionResponse(
+        session_id=ledger.session_id,
+        message="Session created. Upload a CSV or Excel file to begin analysis.",
+    )
+
+
+@app.post("/api/sessions/{session_id}/upload")
+async def upload_and_analyze(
+    session_id: str,
+    file: UploadFile = File(...),
+    user_hypotheses: Optional[str] = Form(None),   # JSON-encoded list
+    data_dict: Optional[UploadFile] = File(None),  # Optional data dictionary
+):
+    """
+    Upload a file and stream the full pipeline as Server-Sent Events.
+    
+    The response is an SSE stream. Connect with EventSource in the frontend.
+    Each event has a `stage` and `message` field.
+    """
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    # Read file bytes
+    file_bytes = await file.read()
+    filename = file.filename or "upload.csv"
+
+    # Parse user hypotheses if provided
+    parsed_hypotheses = None
+    if user_hypotheses:
+        try:
+            parsed_hypotheses = json.loads(user_hypotheses)
+        except json.JSONDecodeError:
+            parsed_hypotheses = [user_hypotheses]
+
+    # Ingest optional data dictionary for RAG
+    if data_dict:
+        dict_bytes = await data_dict.read()
+        dict_content = dict_bytes.decode("utf-8", errors="replace")
+        chunks = parse_document(dict_content, data_dict.filename or "dict.txt")
+        rag_context = build_rag_context(chunks, query="column descriptions")
+        if ledger.dataset:
+            ledger.dataset.rag_context = rag_context
+        else:
+            # Store for use once dataset is loaded
+            ledger._pending_rag_context = rag_context
+
+    session_store.update(ledger)
+
+    async def event_stream():
+        async for event in run_pipeline(ledger, file_bytes, filename, parsed_hypotheses):
+            session_store.update(ledger)   # Persist state after each step
+            yield event
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",    # Needed for Nginx/Render
+        },
+    )
+
+
+@app.get("/api/sessions/{session_id}/status")
+def get_session_status(session_id: str):
+    """Get the current stage and summary of a session."""
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    return {
+        "session_id": ledger.session_id,
+        "stage": ledger.current_stage.value,
+        "is_frozen": ledger.is_frozen,
+        "hypothesis_count": len(ledger.hypotheses),
+        "supported_count": len(ledger.get_supported_hypotheses()),
+        "report_validated": ledger.report_validated,
+        "total_tokens": ledger.total_tokens_used,
+        "self_repairs": ledger.self_repair_count,
+        "reproducibility_hash": ledger.registry_hash,
+    }
+
+
+@app.get("/api/sessions/{session_id}/report")
+def get_report(session_id: str):
+    """Get the final analysis report, visualizations, and ledger entries."""
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    if ledger.current_stage not in [PipelineStage.COMPLETE, PipelineStage.ADVERSARY]:
+        raise HTTPException(status_code=400, detail="Analysis not yet complete")
+
+    return {
+        "session_id": ledger.session_id,
+        "report_html": ledger.report_html,
+        "report_validated": ledger.report_validated,
+        "adversary_violations": [
+            v.dict() for v in ledger.adversary_violations
+        ],
+        "reproducibility_hash": ledger.compute_final_hash(),
+        "ledger_entries": [
+            {
+                "id": h.id,
+                "statement": h.statement,
+                "status": h.status.value,
+                "user_defined": h.user_defined,
+                "columns_involved": h.columns_involved,
+                "statistical_result": h.statistical_result.dict() if h.statistical_result else None,
+                "chart_spec": h.chart_spec,
+                "repair_count": len(h.execution_attempts) - 1 if h.execution_attempts else 0,
+            }
+            for h in ledger.hypotheses
+        ],
+        "visualization_dashboard": ledger.visualization_dashboard.dict() if ledger.visualization_dashboard else None,
+        "agent_timings": ledger.agent_timings,
+        "dataset": ledger.dataset.dict() if ledger.dataset else None,
+    }
+
+
+@app.post("/api/sessions/{session_id}/sql")
+def run_sql_query(session_id: str, request: SQLQueryRequest):
+    """Convert a natural language question to SQL + Mermaid flowchart."""
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    if not hasattr(ledger, "_cleaned_df") or ledger._cleaned_df is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded. Upload a file first.")
+
+    ledger = run_sql(ledger, request.query)
+    session_store.update(ledger)
+
+    result = getattr(ledger, "_sql_query_result", {})
+    return {
+        "sql_query": ledger.sql_result.sql_query,
+        "explanation": ledger.sql_result.explanation,
+        "flowchart_mermaid": ledger.sql_result.flowchart_mermaid,
+        "query_result": result,
+    }
+
+
+@app.post("/api/sessions/{session_id}/hypotheses")
+def add_user_hypotheses(session_id: str, request: HypothesesRequest):
+    """Add user-defined natural language hypotheses before the ledger is frozen."""
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    if ledger.is_frozen:
+        raise HTTPException(
+            status_code=409,
+            detail="Ledger is frozen. User hypotheses must be submitted before analysis begins."
+        )
+
+    from core.ledger import HypothesisEntry
+    added = []
+    for i, stmt in enumerate(request.hypotheses):
+        entry = HypothesisEntry(
+            id=f"UH{len(ledger.hypotheses)+1:02d}",
+            statement=stmt,
+            columns_involved=[],
+            user_defined=True,
+        )
+        ledger.add_hypothesis(entry)
+        added.append(entry.id)
+
+    session_store.update(ledger)
+    return {"added": added, "total_hypotheses": len(ledger.hypotheses)}
+
+
+@app.post("/api/sessions/{session_id}/chat")
+def chat_followup(session_id: str, request: ChatRequest):
+    """
+    Multi-turn conversational follow-up.
+    Routes questions about the analysis to the appropriate handler.
+    """
+    ledger = session_store.get(session_id)
+    if ledger is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    message = request.message.strip()
+    ledger.conversation_history.append({"role": "user", "content": message})
+
+    # Check if user is asking about a specific hypothesis
+    import re
+    h_match = re.search(r'\b(H\d+|UH\d+)\b', message.upper())
+    if h_match:
+        h_id = h_match.group(1)
+        hypothesis = ledger.get_hypothesis(h_id)
+        if hypothesis:
+            reply = (
+                f"**{h_id}: {hypothesis.statement}**\n\n"
+                f"Status: {hypothesis.status.value}\n"
+            )
+            if hypothesis.statistical_result:
+                r = hypothesis.statistical_result
+                reply += (
+                    f"Test: {r.test_name}\n"
+                    f"Raw p-value: {r.raw_p_value:.4f}\n"
+                    f"FDR-adjusted p-value: {r.fdr_adjusted_p_value:.4f}\n"
+                    f"Effect size: {r.effect_size_label} ({r.effect_size:.3f})\n\n"
+                    f"**Authoritative conclusion:** {r.licensed_text}"
+                )
+        else:
+            reply = f"I couldn't find hypothesis {h_id} in this session."
+    else:
+        # General grounded Q&A — only cite from licensed texts
+        from core.llm_client import call_llm
+        licensed = ledger.get_licensed_texts()
+        system = (
+            "You are a data analysis assistant. "
+            "Answer ONLY using the findings listed below. "
+            "Do not invent new findings. "
+            "If the answer is not in the findings, say so clearly.\n\n"
+            "FINDINGS:\n" + "\n".join(f"- {t}" for t in licensed)
+        )
+        reply, tokens = call_llm(
+            system_prompt=system,
+            user_prompt=message,
+            temperature=0.3,
+            max_tokens=500,
+        )
+        ledger.total_tokens_used += tokens
+        ledger.llm_call_count += 1
+
+    ledger.conversation_history.append({"role": "assistant", "content": reply})
+    session_store.update(ledger)
+    return {"reply": reply}
+
+
+# ─── Admin ────────────────────────────────────────────────────────────────────
+
+@app.get("/api/admin/sessions")
+def list_sessions():
+    """List all active sessions."""
+    return {"sessions": session_store.list_sessions()}
+
+
+@app.post("/api/admin/meta-agent/run", response_model=MetaAgentResponse)
+def trigger_meta_agent():
+    """Manually trigger the A8 Self-Improving Meta-Agent cycle."""
+    logger.info("Manual A8 Meta-Agent trigger via API")
+    result = run_meta_agent()
+    return MetaAgentResponse(
+        improvements_made=result.get("improvements_made", []),
+        total_improvements=result.get("total_improvements", 0),
+        run_at=result.get("run_at", ""),
+    )
