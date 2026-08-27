@@ -213,8 +213,8 @@ export function CardStack({
                     height: cardHeight,
                     zIndex,
                     transformStyle: "preserve-3d",
-                    marginLeft: "-50%", // Keep cards centered
                     left: "50%",
+                    marginLeft: -cardWidth / 2, // Fix centering
                   }}
                   initial={
                     reduceMotion
@@ -264,9 +264,24 @@ export function CardStack({
         </div>
       </div>
 
+      {/* Active Item Content Beneath Cards */}
+      <div className="mt-12 flex flex-col items-center justify-center text-center px-4">
+        <h3 className="text-[22px] font-semibold text-white mb-2 flex items-center gap-3">
+          {activeItem.title}
+          {activeItem.tag && (
+            <span className="text-[13px] tracking-widest font-semibold text-aivora-accent uppercase">
+              — {activeItem.tag}
+            </span>
+          )}
+        </h3>
+        <p className="text-white/60 max-w-2xl text-[16px] leading-relaxed">
+          {activeItem.description}
+        </p>
+      </div>
+
       {/* Dots navigation centered at bottom */}
       {showDots ? (
-        <div className="mt-6 flex items-center justify-center gap-3">
+        <div className="mt-8 flex items-center justify-center gap-3">
           <div className="flex items-center gap-2">
             {items.map((it, idx) => {
               const on = idx === active;
@@ -322,25 +337,8 @@ function DefaultFanCard({ item, active }) {
         )}
       </div>
 
-      {/* gradient overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-      {/* content */}
-      <div className="relative z-10 flex h-full flex-col justify-end p-6">
-        {item.tag && (
-          <span className="text-[10px] uppercase tracking-widest font-semibold text-aivora-accent mb-2">
-            {item.tag}
-          </span>
-        )}
-        <div className="truncate text-2xl font-semibold text-white tracking-tight">
-          {item.title}
-        </div>
-        {item.description ? (
-          <div className="mt-2 line-clamp-3 text-[15px] leading-relaxed text-white/70">
-            {item.description}
-          </div>
-        ) : null}
-      </div>
+      {/* gradient overlay (subtle, since text is moved below) */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
     </div>
   );
 }
