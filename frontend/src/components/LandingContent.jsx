@@ -1,6 +1,78 @@
 import React from 'react';
 import { ShieldCheck, ServerOff, Lock, Code2, Network, FileSearch, ArrowRight, BrainCircuit } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CoverflowCarousel } from './ui/coverflow-carousel';
+
+const UNSPLASH = (id) => `https://images.unsplash.com/photo-${id}?w=640&h=640&fit=crop&q=70&auto=format`;
+
+const AGENT_SLIDES = [
+  {
+    src: UNSPLASH("1551288049-bebda4e38f71"), // Abstract tech/data
+    alt: "A1 Profiler",
+    title: "A1 Profiler",
+    subtitle: "Deterministic",
+    desc: "Generates deterministic descriptive statistics: cardinality, missingness, outliers, and candidate keys without LLM hallucinations.",
+    meta: [
+      { label: "Type", value: "Code Execution" },
+      { label: "Constraint", value: "Fixed Output" }
+    ],
+  },
+  {
+    src: UNSPLASH("1451187580459-43490279c0fa"), // Abstract network
+    alt: "A2 Proposer",
+    title: "A2 Proposer",
+    subtitle: "Model",
+    desc: "Reads the profile and proposes strictly testable hypotheses in natural language. Driven by injected domain knowledge.",
+    meta: [
+      { label: "Type", value: "LLM Generation" },
+      { label: "Input", value: "A1 Profile" }
+    ],
+  },
+  {
+    src: UNSPLASH("1526374965328-7f61d4dc18c5"), // Abstract matrix/lock
+    alt: "A3 Registrar",
+    title: "A3 Registrar",
+    subtitle: "Deterministic",
+    desc: "Freezes all candidate hypotheses and their intended statistical tests before any execution begins to prevent p-hacking.",
+    meta: [
+      { label: "Type", value: "State Manager" },
+      { label: "Role", value: "Immutability lock" }
+    ],
+  },
+  {
+    src: UNSPLASH("1518770660439-4636190af475"), // Circuit board/compute
+    alt: "A4 Executor",
+    title: "A4 Executor",
+    subtitle: "Model",
+    desc: "Writes highly optimized pandas code, runs it in an isolated sandbox, and repairs errors in an autonomous loop.",
+    meta: [
+      { label: "Type", value: "LLM Coding" },
+      { label: "Sandbox", value: "Secure Subprocess" }
+    ],
+  },
+  {
+    src: UNSPLASH("1550751827-4bd374c3f58b"), // Abstract structure
+    alt: "A5 Statistician",
+    title: "A5 Statistician",
+    subtitle: "Deterministic",
+    desc: "Checks assumptions (e.g. Shapiro-Wilk), picks the test, computes effect sizes, and applies Benjamini-Hochberg FDR correction.",
+    meta: [
+      { label: "Type", value: "SciPy/Pingouin" },
+      { label: "Action", value: "FDR Control" }
+    ],
+  },
+  {
+    src: UNSPLASH("1504868584819-f818b4d8a9e7"), // Abstract light
+    alt: "A6 Reporter",
+    title: "A6 Reporter",
+    subtitle: "Model",
+    desc: "Compiles the final prose. Strictly constrained to surviving claims—sentences without a ledger entry are structurally rejected.",
+    meta: [
+      { label: "Type", value: "LLM Generation" },
+      { label: "Constraint", value: "Licensed Text Only" }
+    ],
+  }
+];
 
 export default function LandingContent() {
   return (
@@ -57,54 +129,20 @@ export default function LandingContent() {
         </div>
       </section>
 
-      {/* 3. Architecture Pipeline */}
-      <section className="w-full max-w-[1000px] px-6 mt-32 flex flex-col items-center">
-        <h2 className="text-[28px] font-semibold tracking-tight text-white mb-16">
+      {/* 3. Architecture Pipeline Carousel */}
+      <section className="w-full overflow-hidden mt-32 flex flex-col items-center relative z-20">
+        <h2 className="text-[28px] font-semibold tracking-tight text-white mb-8">
           The 6-Stage Autonomous State Machine
         </h2>
         
-        <div className="w-full max-w-[700px] relative">
-          {/* Vertical connection line */}
-          <div className="absolute left-[27px] top-[10px] bottom-[10px] w-px bg-white/10 z-0"></div>
-
-          <div className="space-y-12">
-            <PipelineStep 
-              num="A1" 
-              title="The Profiler" 
-              desc="Generates deterministic descriptive statistics: cardinality, missingness, outliers, and candidate keys without LLM hallucinations." 
-              type="Deterministic"
-            />
-            <PipelineStep 
-              num="A2" 
-              title="The Proposer" 
-              desc="Reads the profile and proposes strictly testable hypotheses in natural language. Driven by injected domain knowledge." 
-              type="Model"
-            />
-            <PipelineStep 
-              num="A3" 
-              title="The Registrar" 
-              desc="Freezes all candidate hypotheses and their intended statistical tests before any execution begins to prevent p-hacking." 
-              type="Deterministic"
-            />
-            <PipelineStep 
-              num="A4" 
-              title="The Executor" 
-              desc="Writes highly optimized pandas code, runs it in an isolated sandbox, and repairs errors in an autonomous loop." 
-              type="Model"
-            />
-            <PipelineStep 
-              num="A5" 
-              title="The Statistician" 
-              desc="Checks assumptions (e.g. Shapiro-Wilk), picks the test, computes effect sizes, and applies Benjamini-Hochberg FDR correction." 
-              type="Deterministic"
-            />
-            <PipelineStep 
-              num="A6" 
-              title="The Reporter" 
-              desc="Compiles the final prose. Strictly constrained to surviving claims—sentences without a ledger entry are structurally rejected." 
-              type="Model"
-            />
-          </div>
+        <div className="w-full py-6">
+          <CoverflowCarousel 
+            slides={AGENT_SLIDES} 
+            showCaption={true} 
+            showNavigation={true}
+            showPagination={true}
+            cardWidth="clamp(200px, 30vw, 320px)"
+          />
         </div>
       </section>
 
@@ -124,31 +162,6 @@ function FeatureCard({ icon, title, desc, glowColor }) {
         </div>
         <h3 className="text-[18px] font-semibold text-[#f5f5f5] tracking-tight mb-3">{title}</h3>
         <p className="text-[14px] leading-relaxed text-[#888]">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-function PipelineStep({ num, title, desc, type }) {
-  const isModel = type === 'Model';
-  return (
-    <div className="relative z-10 flex items-start space-x-8 group">
-      <div className="flex-shrink-0 w-[56px] h-[56px] rounded-full bg-[#0A0A0A] border border-white/10 flex items-center justify-center group-hover:border-white/30 transition-colors shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-        <span className="text-[14px] font-bold font-mono text-white tracking-widest">{num}</span>
-      </div>
-      <div className="pt-2">
-        <div className="flex items-center space-x-3 mb-2">
-          <h4 className="text-[18px] font-semibold text-[#f5f5f5] tracking-tight">{title}</h4>
-          <span className={cn(
-            "text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded",
-            isModel ? "bg-[#f97316]/10 text-[#f97316] border border-[#f97316]/20" : "bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20"
-          )}>
-            {type}
-          </span>
-        </div>
-        <p className="text-[15px] text-[#888] leading-relaxed max-w-[500px]">
-          {desc}
-        </p>
       </div>
     </div>
   );
