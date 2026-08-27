@@ -78,24 +78,8 @@ export default function SetupView({ onSessionStart }) {
         <div className="absolute inset-0 bg-gradient-to-t from-aivora-bg via-transparent to-transparent z-10 pointer-events-none"></div>
 
         {/* Overlay HTML Content */}
-        <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16 h-full justify-between pb-24">
-          
-          <div className="flex flex-col items-center mt-12">
-            <motion.h1
-              custom={1} variants={fadeUpVariants} initial="hidden" animate="visible"
-              className="text-6xl md:text-8xl font-semibold tracking-[-0.03em] mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400 max-w-[1000px] leading-[1.1]"
-            >
-              Ledger Agent
-            </motion.h1>
+        <div className="relative z-20 text-center p-6 flex flex-col items-center mt-16 h-full justify-end pb-24">
 
-            <motion.p
-              custom={2} variants={fadeUpVariants} initial="hidden" animate="visible"
-              className="max-w-2xl mx-auto text-[17px] md:text-[18px] text-gray-400 mb-10 leading-relaxed font-normal"
-            >
-              Deploy intelligent agents that reason over your data, execute statistical workflows, 
-              and turn complex information into actionable, validated results.
-            </motion.p>
-          </div>
 
           <motion.div
             custom={3} variants={fadeUpVariants} initial="hidden" animate="visible"
