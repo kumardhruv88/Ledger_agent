@@ -5,371 +5,461 @@ import {
   Lock, BarChart2, FileSearch, Shield, RefreshCw, Database 
 } from 'lucide-react';
 
-const Counter = ({ from = 0, to, duration = 1.5 }) => {
+const Counter = ({ from = 0, to, duration = 1.5, isFloat = false, delay = 0 }) => {
   const nodeRef = useRef(null);
   const inView = useInView(nodeRef, { once: true, margin: "-50px" });
   
   useEffect(() => {
     if (inView) {
       let startTime;
+      let animationFrameId;
+      
       const updateCounter = (timestamp) => {
         if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+        const elapsed = timestamp - startTime;
+        
+        // Handle delay
+        if (elapsed < delay * 1000) {
+          animationFrameId = requestAnimationFrame(updateCounter);
+          return;
+        }
+        
+        const activeElapsed = elapsed - (delay * 1000);
+        const progress = Math.min(activeElapsed / (duration * 1000), 1);
         const current = progress * (to - from) + from;
         
         if (nodeRef.current) {
-          nodeRef.current.textContent = Number.isInteger(to) 
-            ? Math.floor(current).toString()
-            : current.toFixed(2);
+          nodeRef.current.textContent = isFloat || !Number.isInteger(to)
+            ? current.toFixed(2)
+            : Math.floor(current).toString();
         }
         
         if (progress < 1) {
-          requestAnimationFrame(updateCounter);
+          animationFrameId = requestAnimationFrame(updateCounter);
         }
       };
-      requestAnimationFrame(updateCounter);
+      
+      animationFrameId = requestAnimationFrame(updateCounter);
+      return () => cancelAnimationFrame(animationFrameId);
     }
-  }, [inView, from, to, duration]);
+  }, [inView, from, to, duration, isFloat, delay]);
 
-  return <span ref={nodeRef}>{from}</span>;
+  return <span ref={nodeRef}>{isFloat || !Number.isInteger(from) ? from.toFixed(2) : from}</span>;
 };
 
 export default function LandingContent() {
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
     <div className="min-h-screen bg-[var(--color-bg)] font-sans text-[var(--color-navy)] selection:bg-[var(--color-accent-light)] selection:text-[var(--color-navy)] overflow-hidden">
       
       {/* 1. NAVBAR */}
-      <nav 
-        className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${
-          scrolled ? 'bg-white/90 backdrop-blur-md border-b border-[var(--color-border)] shadow-sm py-3' : 'bg-transparent py-5'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-sm bg-teal-500" />
-            <span className="font-extrabold text-[20px] tracking-tight text-[#0f172a]">Ledger</span>
+      <nav className="fixed top-0 w-full z-50 h-[64px] bg-white/85 backdrop-blur-[12px] border-b border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex items-center justify-between px-5 md:px-[48px]">
+        {/* LEFT BLOCK */}
+        <div className="flex items-center gap-[8px]">
+          <div className="w-[28px] h-[28px] rounded-[6px] bg-gradient-to-br from-[#0d9488] to-[#0f766e] flex items-center justify-center">
+            <span className="text-white text-[14px] font-extrabold">L</span>
           </div>
+          <span className="text-[18px] font-extrabold text-[#0f172a] tracking-[-0.02em]">
+            Ledger
+          </span>
+        </div>
 
-          <div className="hidden md:flex space-x-8">
-            {['Home', 'AI Agents', 'About', 'Pricing'].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace(' ', '-')}`}
-                className="relative text-[14px] font-medium text-[#64748b] hover:text-[#0d9488] transition-colors group"
-              >
-                {item}
-                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#0d9488] origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
-              </a>
-            ))}
-          </div>
+        {/* CENTER BLOCK */}
+        <div className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-[32px]">
+          {['Home', 'AI Agents', 'About', 'Pricing'].map((item) => (
+            <a
+              key={item}
+              className="relative text-[14px] font-medium text-[#64748b] hover:text-[#0d9488] transition-colors duration-200 cursor-pointer pb-[2px] group no-underline"
+            >
+              {item}
+              <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#0d9488] scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+            </a>
+          ))}
+        </div>
 
-          <div className="flex items-center gap-4">
-            <button className="text-[14px] font-medium text-[#64748b] hover:text-[#0f172a] transition-colors hidden sm:block">
-              Sign In
-            </button>
-            <button className="bg-[#0d9488] text-white rounded-lg px-[18px] py-[8px] text-[14px] font-semibold hover:bg-[#0f766e] hover:-translate-y-[1px] hover:shadow-[0_4px_12px_rgba(13,148,136,0.35)] transition-all duration-200">
-              Get Started
-            </button>
-          </div>
+        {/* RIGHT BLOCK */}
+        <div className="flex items-center gap-[12px]">
+          <button className="hidden sm:block bg-transparent text-[#64748b] text-[14px] font-medium px-[12px] py-[8px] rounded-[6px] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-colors duration-200 cursor-pointer border-none">
+            Sign In
+          </button>
+          <button className="bg-[#0d9488] text-white border-none rounded-[8px] px-[20px] py-[9px] text-[14px] font-semibold tracking-[-0.01em] cursor-pointer transition-all duration-200 hover:bg-[#0f766e] hover:-translate-y-[1px] hover:shadow-[0_4px_14px_rgba(13,148,136,0.4)] active:translate-y-0">
+            Get Started
+          </button>
         </div>
       </nav>
 
       {/* 2. HERO */}
-      <section className="relative min-h-screen pt-32 pb-20 flex flex-col items-center justify-center">
-        {/* Background Gradients & Patterns */}
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,var(--color-bg)_0%,#ffffff_100%)]" />
+      <section className="relative min-h-screen bg-gradient-to-b from-[#f0fdfa] to-[#ffffff] overflow-hidden">
+        {/* Subtle dot grid */}
         <div 
-          className="absolute inset-0 z-0 opacity-15"
+          className="absolute inset-0 z-0 opacity-[0.08] pointer-events-none"
           style={{
-            backgroundImage: 'radial-gradient(#0d9488 1px, transparent 1px)',
-            backgroundSize: '24px 24px'
+            backgroundImage: 'radial-gradient(circle, #0d9488 1px, transparent 1px)',
+            backgroundSize: '28px 28px'
           }}
         />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center flex flex-col items-center">
+        <div className="relative z-10 pt-[120px] pb-[80px] px-[24px] max-w-[1200px] mx-auto flex flex-col items-center text-center">
           
+          {/* BADGE */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#0d9488] mb-8 shadow-sm"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0, ease: "easeOut" }}
+            className="inline-flex items-center gap-[8px] bg-white border border-[#99f6e4] rounded-[100px] py-[6px] pr-[16px] pl-[10px] mb-[32px]"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[12px] font-semibold text-[#0d9488] tracking-[0.05em] uppercase">
+            <span className="w-[8px] h-[8px] rounded-full bg-[#10b981] animate-pulse" />
+            <span className="text-[12px] font-semibold text-[#0d9488] tracking-[0.05em] whitespace-nowrap">
               Statistically Rigorous · FDR Controlled · Fully Auditable
             </span>
           </motion.div>
 
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.22 }}
-            className="text-[clamp(44px,6vw,80px)] font-extrabold tracking-[-0.04em] leading-[1.05] text-[#0f172a] mb-6"
-          >
-            Turn Raw CSV Data Into <br className="hidden md:block" />
-            <span className="text-[#0d9488] italic">Statistically Proven</span> Insights.
-          </motion.h1>
+          {/* HEADLINE */}
+          <h1 className="mb-[24px]">
+            <motion.span 
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+              className="block text-[clamp(40px,5.5vw,72px)] font-extrabold text-[#0f172a] tracking-[-0.04em] leading-[1.08]"
+            >
+              Turn Raw CSV Data Into
+            </motion.span>
+            <motion.span 
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+              className="block text-[clamp(40px,5.5vw,72px)] font-extrabold text-[#0d9488] italic tracking-[-0.04em] leading-[1.08]"
+            >
+              Statistically Proven
+            </motion.span>
+            <motion.span 
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+              className="block text-[clamp(40px,5.5vw,72px)] font-extrabold text-[#0f172a] tracking-[-0.04em] leading-[1.08]"
+            >
+              Insights.
+            </motion.span>
+          </h1>
 
+          {/* SUBTEXT */}
           <motion.p 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.34 }}
-            className="text-[18px] text-[#64748b] font-normal leading-[1.7] max-w-[560px] mx-auto mb-10"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+            className="max-w-[560px] mx-auto mb-[40px] text-[18px] font-normal text-[#64748b] leading-[1.75] tracking-[-0.01em]"
           >
             Ledger is the only automated analyst that pre-registers hypotheses, controls false discovery rate via Benjamini–Hochberg, and refuses to report what statistics cannot support.
           </motion.p>
 
+          {/* CTA BUTTONS */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.46 }}
-            className="flex flex-col sm:flex-row gap-[12px] items-center justify-center w-full"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+            className="flex flex-row items-center justify-center gap-[12px] mb-[20px] flex-wrap sm:flex-nowrap"
           >
-            <button className="flex items-center justify-center gap-2 bg-[#0d9488] text-white rounded-xl px-[28px] py-[14px] text-[15px] font-semibold hover:bg-[#0f766e] hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(13,148,136,0.4)] transition-all duration-200 w-full sm:w-auto">
-              <Upload className="w-4 h-4" />
+            <button className="inline-flex items-center gap-[8px] bg-[#0d9488] text-white border-none rounded-[10px] px-[28px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] cursor-pointer whitespace-nowrap w-auto transition-all duration-200 hover:bg-[#0f766e] hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(13,148,136,0.35)]">
+              <Upload className="w-[16px] h-[16px] mr-[6px]" />
               Upload Your CSV
             </button>
-            <button className="group flex items-center justify-center gap-2 bg-white text-[#0f172a] border-[1.5px] border-[var(--color-border)] rounded-xl px-[28px] py-[14px] text-[15px] font-semibold hover:text-[#0d9488] hover:border-[#0d9488] hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(13,148,136,0.12)] transition-all duration-200 w-full sm:w-auto">
-              See How It Works
-              <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+            <button className="group inline-flex items-center gap-[8px] bg-white text-[#0f172a] border-[1.5px] border-[#e2e8f0] rounded-[10px] px-[28px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] cursor-pointer whitespace-nowrap w-auto transition-all duration-200 hover:border-[#0d9488] hover:text-[#0d9488] hover:-translate-y-[2px] hover:shadow-[0_8px_24px_rgba(13,148,136,0.1)]">
+              See How It Works →
+              <ArrowRight className="w-[16px] h-[16px] transition-transform duration-200 group-hover:translate-x-[3px]" />
             </button>
           </motion.div>
 
+          {/* TRUST ROW */}
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-6 flex flex-wrap justify-center items-center gap-x-2 gap-y-1 text-[12px] text-[#64748b] font-medium"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
+            className="flex items-center justify-center gap-[20px] mt-[4px] flex-wrap"
           >
-            <span>✓ No API Key for your data</span>
-            <span className="opacity-50">·</span>
-            <span>✓ FDR q=0.05 guaranteed</span>
-            <span className="opacity-50">·</span>
-            <span>✓ Every claim auditable</span>
+            <div className="text-[13px] font-medium text-[#64748b] flex items-center gap-[6px]">
+              ✓ No API key for your data
+            </div>
+            <span className="text-[#cbd5e1]">·</span>
+            <div className="text-[13px] font-medium text-[#64748b] flex items-center gap-[6px]">
+              ✓ FDR q=0.05 guaranteed
+            </div>
+            <span className="text-[#cbd5e1]">·</span>
+            <div className="text-[13px] font-medium text-[#64748b] flex items-center gap-[6px]">
+              ✓ Every claim auditable
+            </div>
           </motion.div>
-        </div>
 
-        {/* 3. HERO PIPELINE PREVIEW CARD */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.7 }}
-          className="relative z-10 w-full max-w-[90vw] md:max-w-[860px] mt-[48px] bg-white rounded-[20px] border border-[#e2e8f0] shadow-[0_32px_64px_rgba(15,23,42,0.08),0_8px_16px_rgba(13,148,136,0.06)] p-[28px]"
-        >
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex gap-1.5">
-              <div className="w-[10px] h-[10px] rounded-full bg-[#ff5f56]" />
-              <div className="w-[10px] h-[10px] rounded-full bg-[#ffbd2e]" />
-              <div className="w-[10px] h-[10px] rounded-full bg-[#27c93f]" />
-            </div>
-            <div className="text-[12px] text-[#64748b] font-mono">ledger — analysis running</div>
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#0d9488] uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-[#0d9488] animate-pulse" />
-              Live
-            </div>
-          </div>
-
-          {/* Pipeline */}
-          <div className="flex items-center justify-between overflow-x-auto pb-4 hide-scrollbar">
-            <style dangerouslySetInnerHTML={{__html: `
-              @keyframes dashAnim { to { stroke-dashoffset: -8; } }
-              .stroke-anim { animation: dashAnim 0.5s linear infinite; }
-              .hide-scrollbar::-webkit-scrollbar { display: none; }
-            `}} />
-            {[
-              { id: 'A0', label: 'Janitor', color: '#6366f1', status: '✓ done' },
-              { id: 'A1', label: 'Profiler', color: '#0d9488', status: '✓ done' },
-              { id: 'A2', label: 'Proposer', color: '#f59e0b', status: '✓ done' },
-              { id: 'A3', label: 'Registrar 🔒', color: '#ef4444', status: '✓ done', isFrozen: true },
-              { id: 'A4', label: 'Executor', color: '#10b981', status: '⟳ running' },
-            ].map((node, i, arr) => (
-              <React.Fragment key={node.id}>
-                <div 
-                  className="bg-white rounded-xl border border-[#e2e8f0] py-[10px] px-[14px] min-w-[90px] text-center flex flex-col items-center shadow-sm relative shrink-0"
-                  style={{ borderLeft: `3px solid ${node.color}` }}
-                >
-                  {node.isFrozen && (
-                    <div className="absolute -top-2 -right-2 bg-[#ef4444] text-white text-[9px] font-bold px-1.5 rounded-sm uppercase">Frozen</div>
-                  )}
-                  <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#0f172a] whitespace-nowrap mb-1">
-                    {node.id} {node.label}
-                  </span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${node.status.includes('done') ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600 animate-pulse'}`}>
-                    {node.status}
-                  </span>
-                </div>
-                
-                {i < arr.length - 1 && (
-                  <div className="flex-grow min-w-[20px] h-[20px] flex items-center shrink-0">
-                    <svg width="100%" height="2" className="w-full">
-                      <line x1="0" y1="1" x2="100%" y2="1" stroke="#0d9488" strokeWidth="1.5" strokeDasharray="4 4" className="stroke-anim" />
-                    </svg>
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {/* Bottom Chips */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-            {["12 hypotheses registered", "FDR q=0.05", "Groundedness 1.00"].map((text, i) => (
-              <div key={i} className="bg-[var(--color-bg)] rounded-lg text-[11px] font-semibold text-[#0d9488] px-[10px] py-[4px] border border-[#ccfbf1]">
-                {text}
+          {/* PIPELINE PREVIEW CARD */}
+          <motion.div 
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.7, ease: "easeOut" }}
+            className="mt-[60px] w-[min(880px,92vw)] mx-auto bg-white rounded-[20px] border border-[#e2e8f0] shadow-[0_24px_64px_rgba(15,23,42,0.08),0_4px_16px_rgba(13,148,136,0.05)] overflow-hidden p-0 text-left"
+          >
+            {/* Top Bar */}
+            <div className="px-[20px] py-[14px] border-b border-[#f1f5f9] flex items-center justify-between bg-[#fafafa]">
+              <div className="flex gap-[6px]">
+                <div className="w-[10px] h-[10px] rounded-full bg-[#ef4444]" />
+                <div className="w-[10px] h-[10px] rounded-full bg-[#f59e0b]" />
+                <div className="w-[10px] h-[10px] rounded-full bg-[#22c55e]" />
               </div>
-            ))}
-          </div>
-        </motion.div>
+              <div className="text-[12px] text-[#94a3b8] font-medium">
+                ledger — analysis running
+              </div>
+              <div className="flex items-center gap-[6px]">
+                <div className="w-[8px] h-[8px] rounded-full bg-[#10b981] animate-pulse" />
+                <span className="text-[11px] font-bold text-[#0d9488] tracking-[0.08em]">LIVE</span>
+              </div>
+            </div>
+
+            {/* Pipeline Track */}
+            <div className="px-[28px] pt-[24px] pb-[20px] flex items-center justify-between overflow-x-auto gap-0 hide-scrollbar">
+              <style dangerouslySetInnerHTML={{__html: `
+                @keyframes dash { to { stroke-dashoffset: -16; } }
+                .animate-dash { animation: dash 1s linear infinite; }
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+              `}} />
+              
+              {[
+                { id: 'A0', label: 'Janitor', color: '#6366f1', badgeBg: '#eef2ff', badgeText: '#4338ca', status: '✓ done' },
+                { id: 'A1', label: 'Profiler', color: '#0d9488', badgeBg: '#f0fdfa', badgeText: '#0d9488', status: '✓ done' },
+                { id: 'A2', label: 'Proposer', color: '#f59e0b', badgeBg: '#fffbeb', badgeText: '#92400e', status: '✓ done' },
+                { id: 'A3', label: 'Registrar', color: '#ef4444', badgeBg: '#fef2f2', badgeText: '#991b1b', status: '🔒 frozen' },
+                { id: 'A4', label: 'Executor', color: '#10b981', badgeBg: '#f0fdf4', badgeText: '#166534', status: '⟳ running', pulse: true },
+              ].map((node, i, arr) => (
+                <React.Fragment key={node.id}>
+                  <div 
+                    className="flex flex-col items-start px-[14px] py-[10px] bg-white rounded-[12px] border border-[#e2e8f0] border-l-[3px] min-w-[100px] shrink-0"
+                    style={{ borderLeftColor: node.color }}
+                  >
+                    <span className="text-[10px] font-bold tracking-[0.07em] uppercase text-[#0f172a] mb-[6px]">
+                      {node.id} {node.label}
+                    </span>
+                    <span 
+                      className="inline-flex items-center gap-[4px] text-[10px] font-semibold px-[8px] py-[2px] rounded-full"
+                      style={{ backgroundColor: node.badgeBg, color: node.badgeText }}
+                    >
+                      {node.pulse ? (
+                        <span className="animate-pulse flex items-center gap-1">⟳ running</span>
+                      ) : (
+                        <span>{node.status}</span>
+                      )}
+                    </span>
+                  </div>
+                  
+                  {i < arr.length - 1 && (
+                    <svg width="60" height="12" style={{ flexShrink: 0 }}>
+                      <line x1="0" y1="6" x2="60" y2="6" stroke="#0d9488" strokeWidth="1.5" strokeDasharray="4 4" className="animate-dash" />
+                    </svg>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* Stats Row */}
+            <div className="px-[20px] py-[12px] border-t border-[#f1f5f9] flex items-center justify-center gap-[12px] bg-[#fafafa]">
+              {["12 hypotheses registered", "FDR q = 0.05", "Groundedness 1.00"].map((text, i) => (
+                <div key={i} className="bg-[#f0fdfa] border border-[#99f6e4] rounded-[8px] px-[12px] py-[5px] text-[11px] font-semibold text-[#0d9488] whitespace-nowrap">
+                  {text}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+        </div>
       </section>
 
       {/* 4. PROBLEM STATEMENT */}
-      <section className="bg-white py-[120px]">
-        <div className="max-w-[700px] mx-auto px-4 text-center">
-          <div className="text-[11px] uppercase tracking-[0.12em] text-[#0d9488] font-semibold mb-4">The Problem</div>
-          <h2 className="text-[52px] font-extrabold text-[#0f172a] leading-[1.1] tracking-tight">
+      <section className="bg-[#ffffff] py-[120px] px-[24px] w-full">
+        <div className="max-w-[780px] mx-auto flex flex-col items-center text-center">
+          <span className="text-[11px] font-bold tracking-[0.14em] text-[#0d9488] uppercase mb-[20px] block">
+            The Problem
+          </span>
+          <h2 className="text-[clamp(36px,4.5vw,56px)] font-extrabold text-[#0f172a] tracking-[-0.03em] leading-[1.1] m-0 block">
             The Multiple Comparisons Problem.
           </h2>
-          <h2 className="text-[52px] font-extrabold text-[#0d9488] leading-[1.1] tracking-tight italic mb-6">
+          <span className="text-[clamp(36px,4.5vw,56px)] font-extrabold text-[#0d9488] italic tracking-[-0.03em] leading-[1.1] mt-[4px] block">
             Solved.
-          </h2>
-          <p className="text-[18px] text-[#64748b] leading-[1.8] max-w-[600px] mx-auto mb-16">
-            LLMs are eager to please. When handed a dataset and asked for insights, they will test thousands of combinations in the background and only report the statistically significant ones. This guarantees false discoveries. Ledger eliminates p-hacking by explicitly separating hypothesis generation from hypothesis testing.
+          </span>
+          
+          <p className="mt-[28px] max-w-[620px] text-[17px] text-[#64748b] leading-[1.8] font-normal tracking-[-0.01em] text-center">
+            LLMs are eager to please. When handed a dataset and asked for insights,
+            they will test thousands of combinations and only report the statistically
+            significant ones — guaranteeing false discoveries. Ledger eliminates
+            p-hacking by explicitly separating hypothesis generation from testing,
+            enforced structurally by the pipeline architecture.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-gray-100 pt-12">
+          <div className="mt-[56px] mb-[56px] w-[64px] h-[2px] bg-gradient-to-r from-[#0d9488] to-[#99f6e4] rounded-[2px] self-center" />
+
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-0 w-full max-w-[640px] mx-auto border border-[#e2e8f0] rounded-[16px] overflow-hidden bg-white"
+          >
             {[
-              { target: 14, label: "False findings by LLM agents on pure noise", prefix: "~" },
-              { target: 0, label: "False findings by Ledger (NULLSET target)", prefix: "" },
-              { target: 1.00, label: "Groundedness score (every claim auditable)", prefix: "" }
+              { target: 14, label: "False findings by LLM agents on pure noise", prefix: "~", color: "#0d9488" },
+              { target: 0, label: "False findings by Ledger (NULLSET target)", prefix: "", color: "#ef4444" },
+              { target: 1.00, label: "Groundedness — every claim auditable", prefix: "", color: "#10b981", isFloat: true }
             ].map((stat, i) => (
-              <div key={i} className="flex flex-col items-center">
-                <div className="text-[48px] font-extrabold text-[#0d9488] leading-none mb-2">
-                  {stat.prefix}<Counter to={stat.target} duration={1.5} />
+              <div key={i} className="px-[24px] py-[32px] flex flex-col items-center text-center md:border-r border-b md:border-b-0 border-[#e2e8f0] last:border-0 transition-colors duration-200 hover:bg-[#f0fdfa]">
+                <div 
+                  className="text-[52px] font-extrabold tracking-[-0.04em] leading-[1] mb-[10px] tabular-nums"
+                  style={{ color: stat.color }}
+                >
+                  {stat.prefix}<Counter to={stat.target} duration={1.8} isFloat={stat.isFloat} delay={i * 0.2} />
                 </div>
-                <div className="text-[13px] text-[#64748b] font-medium leading-snug max-w-[150px]">
+                <div className="text-[12px] font-medium text-[#64748b] leading-[1.5] max-w-[120px] text-center">
                   {stat.label}
                 </div>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* 5. FEATURE CARDS */}
-      <section className="bg-[#f8fafc] py-[100px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="text-[11px] uppercase tracking-[0.12em] text-[#0d9488] font-semibold mb-4">How It Works</div>
-            <h2 className="text-[40px] md:text-[52px] font-extrabold text-[#0f172a] leading-[1.1] tracking-tight">
+      <section className="bg-[#f8fafc] py-[120px] px-[24px] w-full">
+        <div className="max-w-[1160px] mx-auto">
+          <div className="text-center mb-[64px]">
+            <span className="text-[11px] font-bold tracking-[0.14em] text-[#0d9488] uppercase mb-[16px] block">
+              How It Works
+            </span>
+            <h2 className="text-[clamp(32px,4vw,48px)] font-extrabold text-[#0f172a] tracking-[-0.03em] leading-[1.15] m-0">
               Six Agents. One Auditable Truth.
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              visible: { transition: { staggerChildren: 0.08 } },
+              hidden: {}
+            }}
+            className="grid grid-cols-1 min-[900px]:grid-cols-2 lg:grid-cols-3 gap-[24px] w-full"
+          >
             {[
               { icon: Lock, title: "Hypothesis Pre-registration", desc: "Hypotheses are frozen before any test executes. Post-hoc selection is structurally impossible — not just discouraged.", badge: "A3 REGISTRAR" },
               { icon: BarChart2, title: "Benjamini–Hochberg FDR Control", desc: "Every test is corrected across the full session family. The system refuses to report a finding it cannot statistically support.", badge: "A5 STATISTICIAN" },
-              { icon: FileSearch, title: "Claim-Level Provenance", desc: "Every sentence in the report links to the exact code that ran, the values returned, and the test that licensed it.", badge: "A6 REPORTER" },
-              { icon: Shield, title: "Sandboxed Code Execution", desc: "LLM-generated pandas code runs in an isolated subprocess with import blocklist, resource limits, and no socket access.", badge: "A4 EXECUTOR" },
-              { icon: RefreshCw, title: "Self-Improving Loop", desc: "A8 Meta-Agent mines failure patterns from LangSmith telemetry and generates prompt patches — improving accuracy without retraining.", badge: "A8 META-AGENT" },
-              { icon: Database, title: "Full Offline Capable", desc: "No data leaves your machine. DPDPA-compliant. Run on clinical, financial, and student data safely.", badge: "LOCAL FIRST" }
+              { icon: FileSearch, title: "Claim-Level Provenance", desc: "Every sentence in the report links to the exact code that ran, the values returned, and the test that licensed it. Unbacked narration is rejected.", badge: "A6 REPORTER" },
+              { icon: Shield, title: "Sandboxed Code Execution", desc: "LLM-generated pandas code runs in an isolated subprocess with import blocklist, resource limits, and zero socket access.", badge: "A4 EXECUTOR" },
+              { icon: RefreshCw, title: "Self-Improving Loop", desc: "A8 Meta-Agent mines LangSmith telemetry for failure patterns and generates prompt patches — improving accuracy without retraining weights.", badge: "A8 META-AGENT" },
+              { icon: Database, title: "DPDPA-Compliant Local Analysis", desc: "No data leaves your machine. Run on clinical, financial, and student data that cannot legally be uploaded to cloud services.", badge: "LOCAL FIRST" }
             ].map((card, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-white rounded-[20px] border border-[#e2e8f0] p-[32px] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(13,148,136,0.12)] hover:border-[#99f6e4] transition-all duration-300 flex flex-col h-full"
+                variants={{
+                  hidden: { opacity: 0, y: 32 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } }
+                }}
+                className="group relative bg-white border border-[#e2e8f0] rounded-[20px] px-[28px] py-[32px] flex flex-col items-start text-left cursor-default transition-all duration-300 overflow-hidden hover:-translate-y-[6px] hover:border-[#99f6e4] hover:shadow-[0_20px_48px_rgba(13,148,136,0.1),0_4px_12px_rgba(13,148,136,0.06)]"
               >
-                <div className="w-[48px] h-[48px] rounded-xl bg-[var(--color-bg)] flex items-center justify-center mb-4 shrink-0">
-                  <card.icon className="w-6 h-6 text-[#0d9488]" />
+                <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0d9488] to-[#99f6e4] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="w-[48px] h-[48px] bg-[#f0fdfa] rounded-[12px] flex items-center justify-center mb-[20px] border border-[#ccfbf1] transition-all duration-300 group-hover:bg-[#0d9488]">
+                  <card.icon className="w-[22px] h-[22px] text-[#0d9488] group-hover:text-white transition-colors duration-300" />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#0f172a] mb-2">{card.title}</h3>
-                <p className="text-[14px] text-[#64748b] leading-[1.7] flex-grow mb-6">{card.desc}</p>
-                <div className="self-start inline-block bg-[var(--color-bg)] text-[#0d9488] border border-[#99f6e4] rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]">
+                <h3 className="text-[16px] font-bold text-[#0f172a] tracking-[-0.02em] mb-[10px] leading-[1.3] text-left">
+                  {card.title}
+                </h3>
+                <p className="text-[14px] text-[#64748b] leading-[1.7] font-normal flex-grow">
+                  {card.desc}
+                </p>
+                <div className="mt-[20px] inline-flex items-center bg-[#f0fdfa] border border-[#99f6e4] rounded-[100px] px-[12px] py-[4px] text-[10px] font-bold text-[#0d9488] tracking-[0.08em] uppercase">
                   {card.badge}
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* 6. AGENT PIPELINE VISUAL */}
-      <section className="bg-white py-[100px]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[40px] font-extrabold text-[#0f172a] leading-[1.1] tracking-tight mb-4">
+      {/* 6. AGENT PIPELINE TIMELINE */}
+      <section className="bg-white py-[120px] px-[24px] w-full">
+        <div className="max-w-[780px] mx-auto">
+          <div className="text-center mb-[72px]">
+            <span className="text-[11px] font-bold tracking-[0.14em] text-[#0d9488] uppercase mb-[16px] block">
+              The Pipeline
+            </span>
+            <h2 className="text-[clamp(28px,3.5vw,44px)] font-extrabold text-[#0f172a] tracking-[-0.03em] m-0">
               The 6-Stage Autonomous State Machine
             </h2>
-            <p className="text-[18px] text-[#64748b] leading-[1.7] max-w-[600px] mx-auto">
-              A rigid, inspectable LangGraph pipeline where every transition is a correctness property.
+            <p className="mt-[12px] text-[16px] text-[#64748b] leading-[1.7] max-w-[600px] mx-auto">
+              A rigid, inspectable LangGraph pipeline where every transition is a correctness property — not a suggestion.
             </p>
           </div>
 
-          <div className="relative pl-4 md:pl-0">
-            {[
-              { id: 0, name: "A0 Janitor", type: "DETERMINISTIC", desc: "Type coercion, dedup, domain annotation", in: "Raw CSV", out: "cleaned_df + ColumnProfiles" },
-              { id: 1, name: "A1 Profiler", type: "DETERMINISTIC", desc: "Deep statistical summary, Shapiro-Wilk, entropy", in: "cleaned_df", out: "profile_json" },
-              { id: 2, name: "A2 Proposer", type: "LLM + RAG", desc: "Proposes 5-12 testable hypotheses from profile", in: "profile_json + RAG", out: "HypothesisEntry list" },
-              { id: 3, name: "A3 Registrar", type: "DETERMINISTIC 🔒", desc: "SHA-256 freeze — no new hypotheses after this", in: "hypothesis list", out: "Frozen Registry" },
-              { id: 4, name: "A4 Executor", type: "LLM + ReAct", desc: "Writes & runs pandas code, 3-attempt repair loop", in: "Frozen Registry + schema", out: "raw_data per hypothesis" },
-              { id: 5, name: "A5 Statistician", type: "DETERMINISTIC", desc: "BH-FDR, effect sizes, licensed_text", in: "raw_data", out: "LedgerEntry (SUPPORTED / NOT-SUPPORTED)" },
-            ].map((stage, i, arr) => (
-              <div key={stage.id} className="relative flex md:justify-center items-start md:items-stretch mb-8 last:mb-0 group">
-                
-                {/* Connecting Line */}
-                {i < arr.length - 1 && (
-                  <motion.div 
-                    initial={{ scaleY: 0 }}
-                    whileInView={{ scaleY: 1 }}
-                    viewport={{ once: true, margin: "-100px" }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="absolute left-[19px] md:left-1/2 top-[40px] bottom-[-32px] w-[2px] bg-[#0d9488] md:-translate-x-1/2 origin-top opacity-30" 
-                    style={{ borderLeft: '2px dashed #0d9488', background: 'transparent' }}
-                  />
-                )}
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={{
+              visible: { transition: { staggerChildren: 0.12 } },
+              hidden: {}
+            }}
+            className="relative flex flex-col gap-0"
+          >
+            {/* Center vertical line */}
+            <motion.div 
+              variants={{
+                hidden: { scaleY: 0 },
+                visible: { scaleY: 1, transition: { duration: 1.2, ease: "easeOut" } }
+              }}
+              className="absolute left-[28px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#0d9488] to-[#ccfbf1] z-0 origin-top"
+            />
 
-                {/* Stage Circle */}
-                <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 w-[40px] h-[40px] rounded-full bg-[#0d9488] flex items-center justify-center text-white font-extrabold text-[16px] z-10 border-4 border-white shadow-sm">
+            {[
+              { id: 0, name: "A0 Janitor", type: "DETERMINISTIC", desc: "Type coercion, dedup, domain annotation (medical/financial/temporal)", in: "Raw CSV bytes", out: "cleaned_df + ColumnProfiles" },
+              { id: 1, name: "A1 Profiler", type: "DETERMINISTIC", desc: "Deep statistical summary: Shapiro-Wilk, Shannon entropy, outliers", in: "cleaned_df", out: "profile_json (8k chars)" },
+              { id: 2, name: "A2 Proposer", type: "LLM + RAG", desc: "Reads profile + RAG context, proposes 5-12 strictly testable hypotheses", in: "profile_json + RAG", out: "HypothesisEntry list" },
+              { id: 3, name: "A3 Registrar 🔒", type: "DETERMINISTIC", desc: "SHA-256 freeze — registry is immutable after this. BH denominator locked.", in: "Hypothesis list", out: "Frozen Registry + hash", special: true },
+              { id: 4, name: "A4 Executor", type: "LLM + REACT", desc: "Writes pandas code, executes in sandbox, 3-attempt repair loop per hypothesis", in: "Frozen Registry + schema", out: "raw_data per hypothesis" },
+              { id: 5, name: "A5 Statistician", type: "DETERMINISTIC", desc: "Assumption checks, test selection, BH-FDR across full family, effect sizes", in: "raw_data", out: "LedgerEntry (SUPPORTED / NOT-SUPPORTED)" },
+            ].map((stage, i) => (
+              <motion.div 
+                key={stage.id} 
+                variants={{
+                  hidden: { opacity: 0, x: -20 },
+                  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } }
+                }}
+                className="flex items-start gap-[24px] relative pb-[40px] last:pb-0"
+              >
+                {/* LEFT - Number Circle */}
+                <div 
+                  className={`w-[56px] h-[56px] min-w-[56px] rounded-full flex items-center justify-center text-white text-[18px] font-extrabold relative z-10 border-[3px] border-white
+                    ${stage.special 
+                      ? 'bg-[#ef4444] shadow-[0_0_0_2px_#ef4444,0_4px_12px_rgba(239,68,68,0.3)]' 
+                      : 'bg-[#0d9488] shadow-[0_0_0_2px_#0d9488,0_4px_12px_rgba(13,148,136,0.3)]'
+                    }`}
+                >
                   {stage.id}
                 </div>
 
-                {/* Desktop layout: Alternate left/right cards if desired, or just stack them. 
-                    The prompt implies a timeline. Let's stack them nicely to the right on mobile, and right on desktop for simplicity, 
-                    or split them. The prompt says "Left side: stage number, Center: line, Right side: card". So it's a left-aligned timeline.
-                 */}
-                <div className="ml-[60px] md:ml-[50%] md:pl-10 w-full md:w-1/2 pt-1 pb-4">
-                  <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="bg-white rounded-xl border border-[#e2e8f0] p-[20px] md:p-[24px] hover:shadow-lg transition-shadow duration-300"
-                  >
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h4 className="font-bold text-[#0f172a] text-[16px]">{stage.name}</h4>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
-                        stage.type.includes('DETERMINISTIC') 
-                          ? 'bg-[#f0fdfa] text-[#0d9488] border-[#99f6e4]' 
-                          : stage.type.includes('RAG')
-                            ? 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]'
-                            : 'bg-[#fef3c7] text-[#92400e] border-[#fde68a]'
-                      }`}>
-                        {stage.type}
-                      </span>
-                    </div>
-                    <p className="text-[14px] text-[#64748b] mb-4">{stage.desc}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-[12px] font-mono text-[#64748b] bg-gray-50 rounded-lg p-2 border border-gray-100">
-                      <span className="font-medium text-[#0f172a]">{stage.in}</span>
-                      <ArrowRight className="w-3 h-3 mx-1" />
-                      <span className="font-medium text-[#0d9488]">{stage.out}</span>
-                    </div>
-                  </motion.div>
-                </div>
+                {/* RIGHT - Content Card */}
+                <div className="flex-1 bg-white border border-[#e2e8f0] rounded-[16px] px-[28px] py-[24px] transition-all duration-250 hover:border-[#99f6e4] hover:shadow-[0_8px_24px_rgba(13,148,136,0.08)] hover:translate-x-[4px]">
+                  
+                  {/* TOP ROW */}
+                  <div className="flex items-center gap-[10px] mb-[10px] flex-wrap">
+                    <span className="text-[17px] font-bold text-[#0f172a] tracking-[-0.02em]">
+                      {stage.name}
+                    </span>
+                    <span 
+                      className={`inline-flex items-center rounded-[100px] px-[10px] py-[3px] text-[10px] font-bold tracking-[0.07em] uppercase border ${
+                        stage.type === 'DETERMINISTIC' ? 'bg-[#f0fdfa] text-[#0d9488] border-[#99f6e4]' :
+                        stage.type === 'LLM' ? 'bg-[#fffbeb] text-[#92400e] border-[#fde68a]' :
+                        stage.type === 'LLM + RAG' ? 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]' :
+                        'bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]'
+                      }`}
+                    >
+                      {stage.type}
+                    </span>
+                  </div>
 
-              </div>
+                  {/* DESCRIPTION */}
+                  <p className="text-[14px] text-[#64748b] mb-[14px] leading-[1.6]">
+                    {stage.desc}
+                  </p>
+
+                  {/* INPUT -> OUTPUT ROW */}
+                  <div className="flex items-center gap-[10px] px-[14px] py-[10px] bg-[#f8fafc] rounded-[10px] border border-[#e2e8f0] text-[12px] font-mono flex-wrap">
+                    <span className="bg-white border border-[#e2e8f0] rounded-[6px] px-[10px] py-[3px] text-[#475569] font-medium whitespace-nowrap">
+                      {stage.in}
+                    </span>
+                    <span className="text-[#0d9488] font-bold text-[14px] shrink-0">→</span>
+                    <span className="bg-[#f0fdfa] border border-[#99f6e4] rounded-[6px] px-[10px] py-[3px] text-[#0d9488] font-semibold whitespace-nowrap">
+                      {stage.out}
+                    </span>
+                  </div>
+
+                </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 

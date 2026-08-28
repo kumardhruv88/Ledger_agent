@@ -1,512 +1,514 @@
-You are given a task to integrate an existing React component in the codebase
-
-The codebase should support:
-- shadcn project structure  
-- Tailwind CSS
-- Typescript
-
-If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
-
-Determine the default path for components and styles. 
-If default path for components is not /components/ui, provide instructions on why it's important to create this folder
-Copy-paste this component to /components/ui folder:
-```tsx
-card-stack.tsx
-"use client";
-
-import * as React from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { SquareArrowOutUpRight } from "lucide-react";
-import Link from "next/link";
-
-function cn(...classes: Array<string | undefined | null | false>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-export type CardStackItem = {
-  id: string | number;
-  title: string;
-  description?: string;
-  imageSrc?: string;
-  href?: string;
-  ctaLabel?: string;
-  tag?: string;
-};
-
-export type CardStackProps<T extends CardStackItem> = {
-  items: T[];
-
-  /** Selected index on mount */
-  initialIndex?: number;
-
-  /** How many cards are visible around the active (odd recommended) */
-  maxVisible?: number;
-
-  /** Card sizing */
-  cardWidth?: number;
-  cardHeight?: number;
-
-  /** How much cards overlap each other (0..0.8). Higher = more overlap */
-  overlap?: number;
-
-  /** Total fan angle (deg). Higher = wider arc */
-  spreadDeg?: number;
-
-  /** 3D / depth feel */
-  perspectivePx?: number;
-  depthPx?: number;
-  tiltXDeg?: number;
-
-  /** Active emphasis */
-  activeLiftPx?: number;
-  activeScale?: number;
-  inactiveScale?: number;
-
-  /** Motion */
-  springStiffness?: number;
-  springDamping?: number;
-
-  /** Behavior */
-  loop?: boolean;
-  autoAdvance?: boolean;
-  intervalMs?: number;
-  pauseOnHover?: boolean;
-
-  /** UI */
-  showDots?: boolean;
-  className?: string;
-
-  /** Hooks */
-  onChangeIndex?: (index: number, item: T) => void;
-
-  /** Custom renderer (optional) */
-  renderCard?: (item: T, state: { active: boolean }) => React.ReactNode;
-};
-
-function wrapIndex(n: number, len: number) {
-  if (len <= 0) return 0;
-  return ((n % len) + len) % len;
-}
-
-/** Minimal signed offset from active index to i, with wrapping (for loop behavior). */
-function signedOffset(i: number, active: number, len: number, loop: boolean) {
-  const raw = i - active;
-  if (!loop || len <= 1) return raw;
-
-  // consider wrapped alternative
-  const alt = raw > 0 ? raw - len : raw + len;
-  return Math.abs(alt) < Math.abs(raw) ? alt : raw;
-}
-
-export function CardStack<T extends CardStackItem>({
-  items,
-  initialIndex = 0,
-  maxVisible = 7,
-
-  cardWidth = 520,
-  cardHeight = 320,
-
-  overlap = 0.48,
-  spreadDeg = 48,
-
-  perspectivePx = 1100,
-  depthPx = 140,
-  tiltXDeg = 12,
-
-  activeLiftPx = 22,
-  activeScale = 1.03,
-  inactiveScale = 0.94,
-
-  springStiffness = 280,
-  springDamping = 28,
-
-  loop = true,
-  autoAdvance = false,
-  intervalMs = 2800,
-  pauseOnHover = true,
-
-  showDots = true,
-  className,
-
-  onChangeIndex,
-  renderCard,
-}: CardStackProps<T>) {
-  const reduceMotion = useReducedMotion();
-  const len = items.length;
-
-  const [active, setActive] = React.useState(() =>
-    wrapIndex(initialIndex, len),
-  );
-  const [hovering, setHovering] = React.useState(false);
-
-  // keep active in bounds if items change
-  React.useEffect(() => {
-    setActive((a) => wrapIndex(a, len));
-  }, [len]);
-
-  React.useEffect(() => {
-    if (!len) return;
-    onChangeIndex?.(active, items[active]!);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
-
-  const maxOffset = Math.max(0, Math.floor(maxVisible / 2));
-
-  const cardSpacing = Math.max(10, Math.round(cardWidth * (1 - overlap)));
-  const stepDeg = maxOffset > 0 ? spreadDeg / maxOffset : 0;
-
-  const canGoPrev = loop || active > 0;
-  const canGoNext = loop || active < len - 1;
-
-  const prev = React.useCallback(() => {
-    if (!len) return;
-    if (!canGoPrev) return;
-    setActive((a) => wrapIndex(a - 1, len));
-  }, [canGoPrev, len]);
-
-  const next = React.useCallback(() => {
-    if (!len) return;
-    if (!canGoNext) return;
-    setActive((a) => wrapIndex(a + 1, len));
-  }, [canGoNext, len]);
-
-  // keyboard navigation (when container focused)
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") prev();
-    if (e.key === "ArrowRight") next();
-  };
-
-  // autoplay
-  React.useEffect(() => {
-    if (!autoAdvance) return;
-    if (reduceMotion) return;
-    if (!len) return;
-    if (pauseOnHover && hovering) return;
-
-    const id = window.setInterval(
-      () => {
-        if (loop || active < len - 1) next();
-      },
-      Math.max(700, intervalMs),
-    );
-
-    return () => window.clearInterval(id);
-  }, [
-    autoAdvance,
-    intervalMs,
-    hovering,
-    pauseOnHover,
-    reduceMotion,
-    len,
-    loop,
-    active,
-    next,
-  ]);
-
-  if (!len) return null;
-
-  const activeItem = items[active]!;
-
-  return (
-    <div
-      className={cn("w-full", className)}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
-    >
-      {/* Stage */}
-      <div
-        className="relative w-full"
-        style={{ height: Math.max(380, cardHeight + 80) }}
-        tabIndex={0}
-        onKeyDown={onKeyDown}
-      >
-        {/* background wash / spotlight (unique feel) */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-6 mx-auto h-48 w-[70%] rounded-full bg-black/5 blur-3xl dark:bg-white/5"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto h-40 w-[76%] rounded-full bg-black/10 blur-3xl dark:bg-black/30"
-          aria-hidden="true"
-        />
-
-        <div
-          className="absolute inset-0 flex items-end justify-center"
-          style={{
-            perspective: `${perspectivePx}px`,
-          }}
-        >
-          <AnimatePresence initial={false}>
-            {items.map((item, i) => {
-              const off = signedOffset(i, active, len, loop);
-              const abs = Math.abs(off);
-              const visible = abs <= maxOffset;
-
-              // hide far-away cards cleanly
-              if (!visible) return null;
-
-              // fan geometry
-              const rotateZ = off * stepDeg;
-              const x = off * cardSpacing;
-              const y = abs * 10; // subtle arc-down feel
-              const z = -abs * depthPx;
-
-              const isActive = off === 0;
-
-              const scale = isActive ? activeScale : inactiveScale;
-              const lift = isActive ? -activeLiftPx : 0;
-
-              const rotateX = isActive ? 0 : tiltXDeg;
-
-              const zIndex = 100 - abs;
-
-              // drag only on the active card
-              const dragProps = isActive
-                ? {
-                    drag: "x" as const,
-                    dragConstraints: { left: 0, right: 0 },
-                    dragElastic: 0.18,
-                    onDragEnd: (
-                      _e: any,
-                      info: { offset: { x: number }; velocity: { x: number } },
-                    ) => {
-                      if (reduceMotion) return;
-                      const travel = info.offset.x;
-                      const v = info.velocity.x;
-                      const threshold = Math.min(160, cardWidth * 0.22);
-
-                      // swipe logic
-                      if (travel > threshold || v > 650) prev();
-                      else if (travel < -threshold || v < -650) next();
-                    },
-                  }
-                : {};
-
-              return (
-                <motion.div
-                  key={item.id}
-                  className={cn(
-                    "absolute bottom-0 rounded-2xl border-4 border-black/10 dark:border-white/10 overflow-hidden shadow-xl",
-                    "will-change-transform select-none",
-                    isActive
-                      ? "cursor-grab active:cursor-grabbing"
-                      : "cursor-pointer",
-                  )}
-                  style={{
-                    width: cardWidth,
-                    height: cardHeight,
-                    zIndex,
-                    transformStyle: "preserve-3d",
-                  }}
-                  initial={
-                    reduceMotion
-                      ? false
-                      : {
-                          opacity: 0,
-                          y: y + 40,
-                          x,
-                          rotateZ,
-                          rotateX,
-                          scale,
-                        }
-                  }
-                  animate={{
-                    opacity: 1,
-                    x,
-                    y: y + lift,
-                    rotateZ,
-                    rotateX,
-                    // framer doesn't support translateZ directly in animate on all setups,
-                    // so we use a custom transform via style below.
-                    scale,
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: springStiffness,
-                    damping: springDamping,
-                  }}
-                  // translateZ via style transform (kept stable w/ motion values above)
-                  // We apply translateZ by using a CSS transform in a child wrapper.
-                  onClick={() => setActive(i)}
-                  {...dragProps}
-                >
-                  <div
-                    className="h-full w-full"
-                    style={{
-                      transform: `translateZ(${z}px)`,
-                      transformStyle: "preserve-3d",
-                    }}
-                  >
-                    {renderCard ? (
-                      renderCard(item, { active: isActive })
-                    ) : (
-                      <DefaultFanCard item={item} active={isActive} />
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Dots navigation centered at bottom */}
-      {showDots ? (
-        <div className="mt-6 flex items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            {items.map((it, idx) => {
-              const on = idx === active;
-              return (
-                <button
-                  key={it.id}
-                  onClick={() => setActive(idx)}
-                  className={cn(
-                    "h-2 w-2 rounded-full transition",
-                    on
-                      ? "bg-foreground"
-                      : "bg-foreground/30 hover:bg-foreground/50",
-                  )}
-                  aria-label={`Go to ${it.title}`}
-                />
-              );
-            })}
-          </div>
-          {activeItem.href ? (
-            <Link
-              href={activeItem.href}
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground transition"
-              aria-label="Open link"
-            >
-              <SquareArrowOutUpRight className="h-4 w-4" />
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function DefaultFanCard({ item }: { item: CardStackItem; active: boolean }) {
-  return (
-    <div className="relative h-full w-full">
-      {/* image */}
-      <div className="absolute inset-0">
-        {item.imageSrc ? (
-          <img
-            src={item.imageSrc}
-            alt={item.title}
-            className="h-full w-full object-cover"
-            draggable={false}
-            loading="eager"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-secondary text-sm text-muted-foreground">
-            No image
-          </div>
-        )}
-      </div>
-
-      {/* subtle gradient overlay at bottom for text readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-      {/* content */}
-      <div className="relative z-10 flex h-full flex-col justify-end p-5">
-        <div className="truncate text-lg font-semibold text-white">
-          {item.title}
-        </div>
-        {item.description ? (
-          <div className="mt-1 line-clamp-2 text-sm text-white/80">
-            {item.description}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-
-demo.tsx
-"use client";
-
-import { CardStack, CardStackItem } from "@/components/ui/card-stack";
-
-const items: CardStackItem[] = [
-  {
-    id: 1,
-    title: "Luxury Performance",
-    description: "Experience the thrill of precision engineering",
-    imageSrc: "https://i.pinimg.com/736x/e7/cf/cb/e7cfcbd7a8af10b8839c8d9a3d8eb4ce.jpg",
-    href: "https://www.ruixen.com/",
-  },
-  {
-    id: 2,
-    title: "Elegant Design",
-    description: "Where beauty meets functionality",
-    imageSrc: "https://i.pinimg.com/736x/f4/b0/00/f4b000a6880f7e8d0c677812d789e001.jpg",
-    href: "https://www.ruixen.com/",
-  },
-  {
-    id: 3,
-    title: "Power & Speed",
-    description: "Unleash the true potential of the road",
-    imageSrc: "https://i.pinimg.com/1200x/ae/cf/d7/aecfd72b2439914647ec06d19cb182b5.jpg",
-    href: "https://www.ruixen.com/",
-  },
-  {
-    id: 4,
-    title: "Timeless Craftsmanship",
-    description: "Built with passion, driven by excellence",
-    imageSrc: "https://i.pinimg.com/736x/5d/f7/69/5df7696c4f24b7961c8c72748a355ff8.jpg",
-    href: "https://www.ruixen.com/",
-  },
-  {
-    id: 5,
-    title: "Future of Mobility",
-    description: "Innovation that moves you forward",
-    imageSrc: "https://i.pinimg.com/736x/9c/f2/8b/9cf28b4df4e06e0ca34fbe87f25734b6.jpg",
-    href: "https://www.ruixen.com/",
-  },
-];
-
-export default function CardStackDemoPage() {
-  return (
-    <div className="w-full">
-      <div className="mx-auto w-full max-w-5xl p-8">
-        <CardStack
-          items={items}
-          initialIndex={0}
-          autoAdvance
-          intervalMs={2000}
-          pauseOnHover
-          showDots
-        />
-      </div>
-    </div>
-  );
-}
-
-```
-
-Install NPM dependencies:
-```bash
-next, lucide-react, framer-motion
-```
-
-Implementation Guidelines
- 1. Analyze the component structure and identify all required dependencies
- 2. Review the component's argumens and state
- 3. Identify any required context providers or hooks and install them
- 4. Questions to Ask
- - What data/props will be passed to this component?
- - Are there any specific state management requirements?
- - Are there any required assets (images, icons, etc.)?
- - What is the expected responsive behavior?
- - What is the best place to use this component in the app?
-
-Steps to integrate
- 0. Copy paste all the code above in the correct directories
- 1. Install external dependencies
- 2. Fill image assets with Unsplash stock images you know exist
- 3. Use lucide-react icons for svgs or logos if component requires them
+Fix ONLY these three sections in LandingContent.jsx:
+- Section 4: Problem Statement + Stats counters
+- Section 5: Feature Cards grid  
+- Section 6: Agent Pipeline Timeline
+
+Do NOT touch Navbar, Hero, CTA banner, or Footer.
+
+═══════════════════════════════════════════════════════════
+SECTION 4 — PROBLEM STATEMENT
+═══════════════════════════════════════════════════════════
+
+Outer section:
+  background: #ffffff
+  padding: 120px 24px
+  width: 100%
+
+Inner container:
+  max-width: 780px
+  margin: 0 auto
+  display: flex
+  flex-direction: column
+  align-items: center
+  text-align: center
+
+── OVERLINE ──
+  text: "THE PROBLEM"
+  font-size: 11px
+  font-weight: 700
+  letter-spacing: 0.14em
+  color: #0d9488
+  text-transform: uppercase
+  margin-bottom: 20px
+  display: block
+
+── HEADLINE ──
+  Two separate lines, NOT one string:
+
+  Line 1 — <h2> tag:
+    text: "The Multiple Comparisons Problem."
+    font-size: clamp(36px, 4.5vw, 56px)
+    font-weight: 800
+    color: #0f172a
+    letter-spacing: -0.03em
+    line-height: 1.1
+    margin: 0
+    display: block
+
+  Line 2 — separate <span> or <p> below h2:
+    text: "Solved."
+    font-size: clamp(36px, 4.5vw, 56px)
+    font-weight: 800
+    color: #0d9488
+    font-style: italic
+    letter-spacing: -0.03em
+    line-height: 1.1
+    margin-top: 4px
+    display: block
+
+── BODY TEXT ──
+  margin-top: 28px
+  max-width: 620px
+  font-size: 17px
+  color: #64748b
+  line-height: 1.8
+  font-weight: 400
+  letter-spacing: -0.01em
+  text-align: center
+
+  Text:
+  "LLMs are eager to please. When handed a dataset and asked for insights,
+  they will test thousands of combinations and only report the statistically
+  significant ones — guaranteeing false discoveries. Ledger eliminates
+  p-hacking by explicitly separating hypothesis generation from testing,
+  enforced structurally by the pipeline architecture."
+
+── DIVIDER ──
+  margin-top: 56px
+  margin-bottom: 56px
+  width: 64px
+  height: 2px
+  background: linear-gradient(90deg, #0d9488, #99f6e4)
+  border-radius: 2px
+  align-self: center
+
+── STATS ROW ──
+  display: grid
+  grid-template-columns: repeat(3, 1fr)
+  gap: 0
+  width: 100%
+  max-width: 640px
+  margin: 0 auto
+  border: 1px solid #e2e8f0
+  border-radius: 16px
+  overflow: hidden
+  background: white
+
+  Each stat cell:
+    padding: 32px 24px
+    display: flex
+    flex-direction: column
+    align-items: center
+    text-align: center
+    border-right: 1px solid #e2e8f0
+    last-child: border-right: none
+    transition: background 200ms ease
+    hover: background #f0fdfa
+
+    BIG NUMBER:
+      font-size: 52px
+      font-weight: 800
+      color: #0d9488
+      letter-spacing: -0.04em
+      line-height: 1
+      margin-bottom: 10px
+      font-variant-numeric: tabular-nums
+
+    LABEL:
+      font-size: 12px
+      font-weight: 500
+      color: #64748b
+      line-height: 1.5
+      max-width: 120px
+      text-align: center
+
+  Stat 1: number "~14" / label "False findings by LLM agents on pure noise"
+  Stat 2: number "0"   / label "False findings by Ledger (NULLSET target)"
+  Stat 3: number "1.00"/ label "Groundedness — every claim auditable"
+
+  Stat 2 number color: #ef4444 (red — zero is the goal, make it stand out)
+  Stat 3 number color: #10b981 (green — perfect score)
+
+  framer-motion: useInView on the stats row.
+  When enters viewport:
+    Each number animates from 0 to target over 1.8s
+    Use useEffect + setInterval counting up
+    Stagger each counter by 200ms
+
+═══════════════════════════════════════════════════════════
+SECTION 5 — FEATURE CARDS
+═══════════════════════════════════════════════════════════
+
+Outer section:
+  background: #f8fafc
+  padding: 120px 24px
+  width: 100%
+
+Inner container:
+  max-width: 1160px
+  margin: 0 auto
+
+── HEADER ──
+  text-align: center
+  margin-bottom: 64px
+
+  Overline: "HOW IT WORKS"
+    font-size: 11px, font-weight 700, letter-spacing 0.14em
+    color #0d9488, uppercase, display block, margin-bottom 16px
+
+  H2: "Six Agents. One Auditable Truth."
+    font-size: clamp(32px, 4vw, 48px)
+    font-weight: 800
+    color: #0f172a
+    letter-spacing: -0.03em
+    line-height: 1.15
+    margin: 0
+
+── CARDS GRID ──
+  display: grid
+  grid-template-columns: repeat(3, 1fr)   ← STRICT 3 columns
+  gap: 24px
+  width: 100%
+
+  On tablet (max-width 900px): grid-template-columns: repeat(2, 1fr)
+  On mobile (max-width 600px): grid-template-columns: 1fr
+
+Each card:
+  background: white
+  border: 1px solid #e2e8f0
+  border-radius: 20px
+  padding: 32px 28px
+  display: flex
+  flex-direction: column
+  align-items: flex-start    ← LEFT aligned content, NOT centered
+  text-align: left
+  cursor: default
+  transition: all 300ms ease
+  position: relative
+  overflow: hidden
+
+  ::before (top gradient accent line):
+    content: ''
+    position: absolute
+    top: 0, left: 0, right: 0
+    height: 3px
+    background: linear-gradient(90deg, #0d9488, #99f6e4)
+    opacity: 0
+    transition: opacity 300ms ease
+
+  hover:
+    transform: translateY(-6px)
+    border-color: #99f6e4
+    box-shadow: 0 20px 48px rgba(13,148,136,0.1),
+                0 4px 12px rgba(13,148,136,0.06)
+    ::before opacity: 1
+
+── CARD ICON ──
+  width: 48px, height: 48px
+  background: #f0fdfa
+  border-radius: 12px
+  display: flex
+  align-items: center
+  justify-content: center
+  margin-bottom: 20px
+  border: 1px solid #ccfbf1
+  transition: all 300ms ease
+
+  Icon from lucide-react, size 22px, color #0d9488
+
+  On card hover: icon container background #0d9488, icon color white
+
+── CARD TITLE ──
+  font-size: 16px
+  font-weight: 700
+  color: #0f172a
+  letter-spacing: -0.02em
+  margin-bottom: 10px
+  line-height: 1.3
+
+── CARD BODY ──
+  font-size: 14px
+  color: #64748b
+  line-height: 1.7
+  font-weight: 400
+  flex-grow: 1           ← pushes badge to bottom
+
+── CARD BADGE ──
+  margin-top: 20px
+  display: inline-flex
+  align-items: center
+  background: #f0fdfa
+  border: 1px solid #99f6e4
+  border-radius: 100px
+  padding: 4px 12px
+  font-size: 10px
+  font-weight: 700
+  color: #0d9488
+  letter-spacing: 0.08em
+  text-transform: uppercase
+
+Cards data (6 total, fills 3x2 grid perfectly):
+
+Card 1:
+  Icon: Lock
+  Title: "Hypothesis Pre-registration"
+  Body: "Hypotheses are frozen before any test executes.
+         Post-hoc selection is structurally impossible —
+         not just discouraged."
+  Badge: "A3 REGISTRAR"
+
+Card 2:
+  Icon: BarChart2
+  Title: "Benjamini–Hochberg FDR Control"
+  Body: "Every test is corrected across the full session
+         family. The system refuses to report a finding
+         it cannot statistically support."
+  Badge: "A5 STATISTICIAN"
+
+Card 3:
+  Icon: FileSearch
+  Title: "Claim-Level Provenance"
+  Body: "Every sentence in the report links to the exact
+         code that ran, the values returned, and the test
+         that licensed it. Unbacked narration is rejected."
+  Badge: "A6 REPORTER"
+
+Card 4:
+  Icon: Shield
+  Title: "Sandboxed Code Execution"
+  Body: "LLM-generated pandas code runs in an isolated
+         subprocess with import blocklist, resource limits,
+         and zero socket access."
+  Badge: "A4 EXECUTOR"
+
+Card 5:
+  Icon: RefreshCw
+  Title: "Self-Improving Loop"
+  Body: "A8 Meta-Agent mines LangSmith telemetry for
+         failure patterns and generates prompt patches —
+         improving accuracy without retraining weights."
+  Badge: "A8 META-AGENT"
+
+Card 6:
+  Icon: Database
+  Title: "DPDPA-Compliant Local Analysis"
+  Body: "No data leaves your machine. Run on clinical,
+         financial, and student data that cannot legally
+         be uploaded to cloud services."
+  Badge: "LOCAL FIRST"
+
+framer-motion on cards:
+  useInView on the grid container
+  When enters viewport: staggerChildren 0.08s
+  Each card: initial {{opacity:0, y:32}} animate {{opacity:1, y:0}}
+  transition: {{duration:0.45, ease:"easeOut"}}
+
+═══════════════════════════════════════════════════════════
+SECTION 6 — AGENT PIPELINE TIMELINE
+═══════════════════════════════════════════════════════════
+
+Outer section:
+  background: white
+  padding: 120px 24px
+  width: 100%
+
+Inner container:
+  max-width: 780px
+  margin: 0 auto
+
+── HEADER ──
+  text-align: center
+  margin-bottom: 72px
+
+  Overline: "THE PIPELINE"
+    same style as other overlines
+
+  H2: "The 6-Stage Autonomous State Machine"
+    font-size: clamp(28px, 3.5vw, 44px)
+    font-weight: 800
+    color: #0f172a
+    letter-spacing: -0.03em
+
+  Subtext:
+    "A rigid, inspectable LangGraph pipeline where every
+     transition is a correctness property — not a suggestion."
+    font-size: 16px, color #64748b, margin-top 12px, line-height 1.7
+
+── TIMELINE LAYOUT ──
+  position: relative
+  display: flex
+  flex-direction: column
+  gap: 0
+
+  CENTER VERTICAL LINE:
+    position: absolute
+    left: 28px            ← aligns with center of number circles
+    top: 0
+    bottom: 0
+    width: 2px
+    background: linear-gradient(180deg, #0d9488 0%, #ccfbf1 100%)
+    z-index: 0
+
+Each timeline row:
+  display: flex
+  align-items: flex-start
+  gap: 24px
+  position: relative
+  padding-bottom: 40px
+  last-child: padding-bottom 0
+
+  LEFT — Number circle:
+    width: 56px
+    height: 56px
+    min-width: 56px        ← prevents shrinking
+    border-radius: 50%
+    background: #0d9488
+    color: white
+    font-size: 18px
+    font-weight: 800
+    display: flex
+    align-items: center
+    justify-content: center
+    position: relative
+    z-index: 1
+    border: 3px solid white
+    box-shadow: 0 0 0 2px #0d9488, 0 4px 12px rgba(13,148,136,0.3)
+
+    Special for A3 Registrar:
+      background: #ef4444
+      box-shadow: 0 0 0 2px #ef4444, 0 4px 12px rgba(239,68,68,0.3)
+
+  RIGHT — Content card:
+    flex: 1
+    background: white
+    border: 1px solid #e2e8f0
+    border-radius: 16px
+    padding: 24px 28px
+    transition: all 250ms ease
+    hover:
+      border-color: #99f6e4
+      box-shadow: 0 8px 24px rgba(13,148,136,0.08)
+      transform: translateX(4px)
+
+    TOP ROW (flex, align-items center, gap 10px, margin-bottom 10px):
+      Agent name:
+        font-size: 17px
+        font-weight: 700
+        color: #0f172a
+        letter-spacing: -0.02em
+
+      Nature badge:
+        display: inline-flex
+        align-items: center
+        border-radius: 100px
+        padding: 3px 10px
+        font-size: 10px
+        font-weight: 700
+        letter-spacing: 0.07em
+        text-transform: uppercase
+
+        DETERMINISTIC → bg #f0fdfa, color #0d9488, border 1px solid #99f6e4
+        LLM           → bg #fffbeb, color #92400e, border 1px solid #fde68a
+        LLM + RAG     → bg #ede9fe, color #5b21b6, border 1px solid #ddd6fe
+        LLM + REACT   → bg #fff7ed, color #c2410c, border 1px solid #fed7aa
+
+    DESCRIPTION:
+      font-size: 14px
+      color: #64748b
+      margin-bottom: 14px
+      line-height: 1.6
+
+    INPUT → OUTPUT ROW:
+      display: flex
+      align-items: center
+      gap: 10px
+      padding: 10px 14px
+      background: #f8fafc
+      border-radius: 10px
+      border: 1px solid #e2e8f0
+      font-size: 12px
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace
+
+      INPUT chip:
+        background: white
+        border: 1px solid #e2e8f0
+        border-radius: 6px
+        padding: 3px 10px
+        color: #475569
+        font-weight: 500
+        white-space: nowrap
+
+      Arrow: →
+        color: #0d9488
+        font-weight: 700
+        font-size: 14px
+        flex-shrink: 0
+
+      OUTPUT chip:
+        background: #f0fdfa
+        border: 1px solid #99f6e4
+        border-radius: 6px
+        padding: 3px 10px
+        color: #0d9488
+        font-weight: 600
+        white-space: nowrap
+
+Timeline stages data:
+
+Stage 0: A0 Janitor | DETERMINISTIC
+  desc: "Type coercion, dedup, domain annotation (medical/financial/temporal)"
+  input: "Raw CSV bytes"
+  output: "cleaned_df + ColumnProfiles"
+
+Stage 1: A1 Profiler | DETERMINISTIC
+  desc: "Deep statistical summary: Shapiro-Wilk, Shannon entropy, outliers"
+  input: "cleaned_df"
+  output: "profile_json (8k chars)"
+
+Stage 2: A2 Proposer | LLM + RAG
+  desc: "Reads profile + RAG context, proposes 5-12 strictly testable hypotheses"
+  input: "profile_json + RAG"
+  output: "HypothesisEntry list"
+
+Stage 3: A3 Registrar 🔒 | DETERMINISTIC
+  desc: "SHA-256 freeze — registry is immutable after this. BH denominator locked."
+  input: "Hypothesis list"
+  output: "Frozen Registry + hash"
+  circle color: red (#ef4444)
+
+Stage 4: A4 Executor | LLM + REACT
+  desc: "Writes pandas code, executes in sandbox, 3-attempt repair loop per hypothesis"
+  input: "Frozen Registry + schema"
+  output: "raw_data per hypothesis"
+
+Stage 5: A5 Statistician | DETERMINISTIC
+  desc: "Assumption checks, test selection, BH-FDR across full family, effect sizes"
+  input: "raw_data"
+  output: "LedgerEntry (SUPPORTED / NOT-SUPPORTED)"
+
+framer-motion on timeline:
+  Each row: initial {{opacity:0, x:-20}} animate {{opacity:1, x:0}}
+  Stagger: 0.12s between each row
+  Trigger: useInView on the timeline container
+  The vertical line: initial scaleY:0 → animate scaleY:1
+    transition: duration 1.2s, ease "easeOut"
+    transform-origin: top
+
+═══════════════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════════════
+
+1. Feature cards MUST be 3 columns — use CSS Grid, not flexbox
+2. Timeline number circles MUST be fixed 56px — no shrinking
+3. All section max-widths enforced — nothing bleeds full screen width
+4. Stats row MUST be a 3-column grid with borders between cells
+5. Every card title LEFT aligned (not centered like the old version)
+6. No full-width buttons anywhere in these sections
+7. Input/output row uses monospace font for the chip text
+8. Do not add any dark backgrounds
+9. Responsive: cards go 2-col at 900px, 1-col at 600px
+          timeline stays single column at all sizes
+10. Use useInView from framer-motion for all scroll animations:
+    import {{ useInView }} from 'framer-motion'
+    const ref = useRef(null)
+    const isInView = useInView(ref, {{ once: true, margin: "-100px" }})
