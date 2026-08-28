@@ -1,514 +1,414 @@
-Fix ONLY these three sections in LandingContent.jsx:
-- Section 4: Problem Statement + Stats counters
-- Section 5: Feature Cards grid  
-- Section 6: Agent Pipeline Timeline
-
-Do NOT touch Navbar, Hero, CTA banner, or Footer.
+Fix ONLY these two things in LandingContent.jsx:
+1. Replace the vertical timeline (Section 6) with a horizontal 
+   scrolling card carousel
+2. Fix the footer completely
+Do NOT touch any other section.
 
 ═══════════════════════════════════════════════════════════
-SECTION 4 — PROBLEM STATEMENT
+SECTION 6 — AGENT CARDS (Horizontal Auto-Scroll Carousel)
 ═══════════════════════════════════════════════════════════
+
+Replace the entire vertical timeline with this:
 
 Outer section:
-  background: #ffffff
-  padding: 120px 24px
-  width: 100%
-
-Inner container:
-  max-width: 780px
-  margin: 0 auto
-  display: flex
-  flex-direction: column
-  align-items: center
-  text-align: center
-
-── OVERLINE ──
-  text: "THE PROBLEM"
-  font-size: 11px
-  font-weight: 700
-  letter-spacing: 0.14em
-  color: #0d9488
-  text-transform: uppercase
-  margin-bottom: 20px
-  display: block
-
-── HEADLINE ──
-  Two separate lines, NOT one string:
-
-  Line 1 — <h2> tag:
-    text: "The Multiple Comparisons Problem."
-    font-size: clamp(36px, 4.5vw, 56px)
-    font-weight: 800
-    color: #0f172a
-    letter-spacing: -0.03em
-    line-height: 1.1
-    margin: 0
-    display: block
-
-  Line 2 — separate <span> or <p> below h2:
-    text: "Solved."
-    font-size: clamp(36px, 4.5vw, 56px)
-    font-weight: 800
-    color: #0d9488
-    font-style: italic
-    letter-spacing: -0.03em
-    line-height: 1.1
-    margin-top: 4px
-    display: block
-
-── BODY TEXT ──
-  margin-top: 28px
-  max-width: 620px
-  font-size: 17px
-  color: #64748b
-  line-height: 1.8
-  font-weight: 400
-  letter-spacing: -0.01em
-  text-align: center
-
-  Text:
-  "LLMs are eager to please. When handed a dataset and asked for insights,
-  they will test thousands of combinations and only report the statistically
-  significant ones — guaranteeing false discoveries. Ledger eliminates
-  p-hacking by explicitly separating hypothesis generation from testing,
-  enforced structurally by the pipeline architecture."
-
-── DIVIDER ──
-  margin-top: 56px
-  margin-bottom: 56px
-  width: 64px
-  height: 2px
-  background: linear-gradient(90deg, #0d9488, #99f6e4)
-  border-radius: 2px
-  align-self: center
-
-── STATS ROW ──
-  display: grid
-  grid-template-columns: repeat(3, 1fr)
-  gap: 0
-  width: 100%
-  max-width: 640px
-  margin: 0 auto
-  border: 1px solid #e2e8f0
-  border-radius: 16px
-  overflow: hidden
   background: white
-
-  Each stat cell:
-    padding: 32px 24px
-    display: flex
-    flex-direction: column
-    align-items: center
-    text-align: center
-    border-right: 1px solid #e2e8f0
-    last-child: border-right: none
-    transition: background 200ms ease
-    hover: background #f0fdfa
-
-    BIG NUMBER:
-      font-size: 52px
-      font-weight: 800
-      color: #0d9488
-      letter-spacing: -0.04em
-      line-height: 1
-      margin-bottom: 10px
-      font-variant-numeric: tabular-nums
-
-    LABEL:
-      font-size: 12px
-      font-weight: 500
-      color: #64748b
-      line-height: 1.5
-      max-width: 120px
-      text-align: center
-
-  Stat 1: number "~14" / label "False findings by LLM agents on pure noise"
-  Stat 2: number "0"   / label "False findings by Ledger (NULLSET target)"
-  Stat 3: number "1.00"/ label "Groundedness — every claim auditable"
-
-  Stat 2 number color: #ef4444 (red — zero is the goal, make it stand out)
-  Stat 3 number color: #10b981 (green — perfect score)
-
-  framer-motion: useInView on the stats row.
-  When enters viewport:
-    Each number animates from 0 to target over 1.8s
-    Use useEffect + setInterval counting up
-    Stagger each counter by 200ms
-
-═══════════════════════════════════════════════════════════
-SECTION 5 — FEATURE CARDS
-═══════════════════════════════════════════════════════════
-
-Outer section:
-  background: #f8fafc
-  padding: 120px 24px
+  padding: 100px 0        ← no horizontal padding, cards bleed to edges
   width: 100%
+  overflow: hidden
 
-Inner container:
-  max-width: 1160px
-  margin: 0 auto
-
-── HEADER ──
+Header container:
+  max-width: 780px
+  margin: 0 auto 56px
+  padding: 0 24px
   text-align: center
-  margin-bottom: 64px
 
-  Overline: "HOW IT WORKS"
-    font-size: 11px, font-weight 700, letter-spacing 0.14em
-    color #0d9488, uppercase, display block, margin-bottom 16px
+  Overline: "THE PIPELINE"
+    font-size: 11px
+    font-weight: 600
+    letter-spacing: 0.14em
+    color: #0d9488
+    text-transform: uppercase
+    display: block
+    margin-bottom: 14px
 
-  H2: "Six Agents. One Auditable Truth."
-    font-size: clamp(32px, 4vw, 48px)
-    font-weight: 800
+  H2: "The 6-Stage Autonomous State Machine"
+    font-size: clamp(26px, 3vw, 38px)
+    font-weight: 700              ← NOT 800, thinner
     color: #0f172a
     letter-spacing: -0.03em
-    line-height: 1.15
-    margin: 0
+    line-height: 1.2
+    margin: 0 0 12px 0
 
-── CARDS GRID ──
-  display: grid
-  grid-template-columns: repeat(3, 1fr)   ← STRICT 3 columns
-  gap: 24px
+  Subtext:
+    font-size: 15px
+    font-weight: 400              ← thin
+    color: #94a3b8
+    line-height: 1.6
+    letter-spacing: -0.01em
+
+── CAROUSEL TRACK ──
+
+Wrapper div:
+  position: relative
   width: 100%
 
-  On tablet (max-width 900px): grid-template-columns: repeat(2, 1fr)
-  On mobile (max-width 600px): grid-template-columns: 1fr
+  Left fade overlay:
+    position: absolute, left 0, top 0, bottom 0, width 80px
+    background: linear-gradient(90deg, white, transparent)
+    z-index: 2, pointer-events: none
+
+  Right fade overlay:
+    position: absolute, right 0, top 0, bottom 0, width 80px
+    background: linear-gradient(270deg, white, transparent)
+    z-index: 2, pointer-events: none
+
+Scrolling track:
+  display: flex
+  gap: 20px
+  padding: 20px 80px 32px
+  overflow-x: auto
+  scroll-behavior: smooth
+  cursor: grab
+  active: cursor: grabbing
+
+  /* Hide scrollbar but keep scroll */
+  scrollbar-width: none
+  &::-webkit-scrollbar {{ display: none }}
+
+  /* Auto-scroll animation */
+  animation: autoScroll 30s linear infinite
+  
+  @keyframes autoScroll {{
+    0%   {{ transform: translateX(0) }}
+    100% {{ transform: translateX(-50%) }}
+  }}
+  
+  Pause on hover:
+    &:hover {{ animation-play-state: paused }}
+
+  /* Duplicate the cards array to make seamless loop:
+     render agents twice: [...agents, ...agents]
+     so when it scrolls to the end it loops seamlessly */
+
+── AGENT CARD ──
 
 Each card:
+  min-width: 260px
+  max-width: 260px
   background: white
   border: 1px solid #e2e8f0
-  border-radius: 20px
-  padding: 32px 28px
+  border-radius: 18px
+  padding: 24px 22px
   display: flex
   flex-direction: column
-  align-items: flex-start    ← LEFT aligned content, NOT centered
-  text-align: left
-  cursor: default
-  transition: all 300ms ease
+  gap: 0
+  flex-shrink: 0
   position: relative
   overflow: hidden
+  transition: all 280ms ease
+  cursor: default
 
-  ::before (top gradient accent line):
-    content: ''
+  Top accent bar:
     position: absolute
     top: 0, left: 0, right: 0
     height: 3px
-    background: linear-gradient(90deg, #0d9488, #99f6e4)
-    opacity: 0
-    transition: opacity 300ms ease
+    border-radius: 18px 18px 0 0
 
-  hover:
-    transform: translateY(-6px)
+  Hover:
+    transform: translateY(-8px)
+    box-shadow: 0 20px 48px rgba(13,148,136,0.13),
+                0 4px 12px rgba(0,0,0,0.06)
     border-color: #99f6e4
-    box-shadow: 0 20px 48px rgba(13,148,136,0.1),
-                0 4px 12px rgba(13,148,136,0.06)
-    ::before opacity: 1
 
-── CARD ICON ──
-  width: 48px, height: 48px
-  background: #f0fdfa
-  border-radius: 12px
-  display: flex
-  align-items: center
-  justify-content: center
-  margin-bottom: 20px
-  border: 1px solid #ccfbf1
-  transition: all 300ms ease
-
-  Icon from lucide-react, size 22px, color #0d9488
-
-  On card hover: icon container background #0d9488, icon color white
-
-── CARD TITLE ──
-  font-size: 16px
-  font-weight: 700
-  color: #0f172a
-  letter-spacing: -0.02em
-  margin-bottom: 10px
-  line-height: 1.3
-
-── CARD BODY ──
-  font-size: 14px
-  color: #64748b
-  line-height: 1.7
-  font-weight: 400
-  flex-grow: 1           ← pushes badge to bottom
-
-── CARD BADGE ──
-  margin-top: 20px
-  display: inline-flex
-  align-items: center
-  background: #f0fdfa
-  border: 1px solid #99f6e4
-  border-radius: 100px
-  padding: 4px 12px
-  font-size: 10px
-  font-weight: 700
-  color: #0d9488
-  letter-spacing: 0.08em
-  text-transform: uppercase
-
-Cards data (6 total, fills 3x2 grid perfectly):
-
-Card 1:
-  Icon: Lock
-  Title: "Hypothesis Pre-registration"
-  Body: "Hypotheses are frozen before any test executes.
-         Post-hoc selection is structurally impossible —
-         not just discouraged."
-  Badge: "A3 REGISTRAR"
-
-Card 2:
-  Icon: BarChart2
-  Title: "Benjamini–Hochberg FDR Control"
-  Body: "Every test is corrected across the full session
-         family. The system refuses to report a finding
-         it cannot statistically support."
-  Badge: "A5 STATISTICIAN"
-
-Card 3:
-  Icon: FileSearch
-  Title: "Claim-Level Provenance"
-  Body: "Every sentence in the report links to the exact
-         code that ran, the values returned, and the test
-         that licensed it. Unbacked narration is rejected."
-  Badge: "A6 REPORTER"
-
-Card 4:
-  Icon: Shield
-  Title: "Sandboxed Code Execution"
-  Body: "LLM-generated pandas code runs in an isolated
-         subprocess with import blocklist, resource limits,
-         and zero socket access."
-  Badge: "A4 EXECUTOR"
-
-Card 5:
-  Icon: RefreshCw
-  Title: "Self-Improving Loop"
-  Body: "A8 Meta-Agent mines LangSmith telemetry for
-         failure patterns and generates prompt patches —
-         improving accuracy without retraining weights."
-  Badge: "A8 META-AGENT"
-
-Card 6:
-  Icon: Database
-  Title: "DPDPA-Compliant Local Analysis"
-  Body: "No data leaves your machine. Run on clinical,
-         financial, and student data that cannot legally
-         be uploaded to cloud services."
-  Badge: "LOCAL FIRST"
-
-framer-motion on cards:
-  useInView on the grid container
-  When enters viewport: staggerChildren 0.08s
-  Each card: initial {{opacity:0, y:32}} animate {{opacity:1, y:0}}
-  transition: {{duration:0.45, ease:"easeOut"}}
-
-═══════════════════════════════════════════════════════════
-SECTION 6 — AGENT PIPELINE TIMELINE
-═══════════════════════════════════════════════════════════
-
-Outer section:
-  background: white
-  padding: 120px 24px
-  width: 100%
-
-Inner container:
-  max-width: 780px
-  margin: 0 auto
-
-── HEADER ──
-  text-align: center
-  margin-bottom: 72px
-
-  Overline: "THE PIPELINE"
-    same style as other overlines
-
-  H2: "The 6-Stage Autonomous State Machine"
-    font-size: clamp(28px, 3.5vw, 44px)
-    font-weight: 800
-    color: #0f172a
-    letter-spacing: -0.03em
-
-  Subtext:
-    "A rigid, inspectable LangGraph pipeline where every
-     transition is a correctness property — not a suggestion."
-    font-size: 16px, color #64748b, margin-top 12px, line-height 1.7
-
-── TIMELINE LAYOUT ──
-  position: relative
-  display: flex
-  flex-direction: column
-  gap: 0
-
-  CENTER VERTICAL LINE:
-    position: absolute
-    left: 28px            ← aligns with center of number circles
-    top: 0
-    bottom: 0
-    width: 2px
-    background: linear-gradient(180deg, #0d9488 0%, #ccfbf1 100%)
-    z-index: 0
-
-Each timeline row:
-  display: flex
-  align-items: flex-start
-  gap: 24px
-  position: relative
-  padding-bottom: 40px
-  last-child: padding-bottom 0
-
-  LEFT — Number circle:
-    width: 56px
-    height: 56px
-    min-width: 56px        ← prevents shrinking
-    border-radius: 50%
-    background: #0d9488
-    color: white
-    font-size: 18px
-    font-weight: 800
+  STAGE NUMBER + BADGE ROW:
     display: flex
     align-items: center
-    justify-content: center
-    position: relative
-    z-index: 1
-    border: 3px solid white
-    box-shadow: 0 0 0 2px #0d9488, 0 4px 12px rgba(13,148,136,0.3)
+    justify-content: space-between
+    margin-bottom: 18px
 
-    Special for A3 Registrar:
-      background: #ef4444
-      box-shadow: 0 0 0 2px #ef4444, 0 4px 12px rgba(239,68,68,0.3)
-
-  RIGHT — Content card:
-    flex: 1
-    background: white
-    border: 1px solid #e2e8f0
-    border-radius: 16px
-    padding: 24px 28px
-    transition: all 250ms ease
-    hover:
-      border-color: #99f6e4
-      box-shadow: 0 8px 24px rgba(13,148,136,0.08)
-      transform: translateX(4px)
-
-    TOP ROW (flex, align-items center, gap 10px, margin-bottom 10px):
-      Agent name:
-        font-size: 17px
-        font-weight: 700
-        color: #0f172a
-        letter-spacing: -0.02em
-
-      Nature badge:
-        display: inline-flex
-        align-items: center
-        border-radius: 100px
-        padding: 3px 10px
-        font-size: 10px
-        font-weight: 700
-        letter-spacing: 0.07em
-        text-transform: uppercase
-
-        DETERMINISTIC → bg #f0fdfa, color #0d9488, border 1px solid #99f6e4
-        LLM           → bg #fffbeb, color #92400e, border 1px solid #fde68a
-        LLM + RAG     → bg #ede9fe, color #5b21b6, border 1px solid #ddd6fe
-        LLM + REACT   → bg #fff7ed, color #c2410c, border 1px solid #fed7aa
-
-    DESCRIPTION:
-      font-size: 14px
-      color: #64748b
-      margin-bottom: 14px
-      line-height: 1.6
-
-    INPUT → OUTPUT ROW:
+    Stage number:
+      width: 32px
+      height: 32px
+      border-radius: 8px
       display: flex
       align-items: center
-      gap: 10px
-      padding: 10px 14px
-      background: #f8fafc
-      border-radius: 10px
-      border: 1px solid #e2e8f0
+      justify-content: center
+      font-size: 13px
+      font-weight: 700
+      letter-spacing: -0.02em
+
+    Nature badge:
+      font-size: 9px
+      font-weight: 700
+      letter-spacing: 0.08em
+      text-transform: uppercase
+      padding: 3px 9px
+      border-radius: 100px
+      border: 1px solid
+
+  AGENT NAME:
+    font-size: 15px
+    font-weight: 700          ← NOT 800, keep it sharp not heavy
+    color: #0f172a
+    letter-spacing: -0.03em
+    line-height: 1.2
+    margin-bottom: 8px
+
+  DESCRIPTION:
+    font-size: 12.5px
+    font-weight: 400
+    color: #64748b
+    line-height: 1.6
+    letter-spacing: -0.01em
+    flex-grow: 1
+    margin-bottom: 16px
+
+  INPUT → OUTPUT:
+    display: flex
+    align-items: center
+    gap: 6px
+    padding: 8px 10px
+    background: #f8fafc
+    border-radius: 8px
+    border: 1px solid #f1f5f9
+
+    Input text:
+      font-size: 10px
+      font-weight: 500
+      color: #94a3b8
+      font-family: 'JetBrains Mono', monospace
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+      max-width: 85px
+
+    Arrow "→":
+      font-size: 11px
+      color: #0d9488
+      flex-shrink: 0
+      font-weight: 700
+
+    Output text:
+      font-size: 10px
+      font-weight: 600
+      color: #0d9488
+      font-family: 'JetBrains Mono', monospace
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+      max-width: 95px
+
+Cards data with accent colors:
+
+Card 0 — A0 Janitor:
+  accent bar: #6366f1 (purple)
+  stage number: bg #eef2ff, color #6366f1
+  badge: bg #eef2ff, color #4338ca, border #c7d2fe, text "DETERMINISTIC"
+  name: "A0 Janitor"
+  desc: "Type coercion, dedup, and rule-based domain annotation"
+  input: "Raw CSV" → output: "cleaned_df"
+
+Card 1 — A1 Profiler:
+  accent bar: #0d9488 (teal)
+  stage number: bg #f0fdfa, color #0d9488
+  badge: bg #f0fdfa, color #0d9488, border #99f6e4, text "DETERMINISTIC"
+  name: "A1 Profiler"
+  desc: "Shapiro-Wilk, entropy, outlier detection. Zero LLM."
+  input: "cleaned_df" → output: "profile_json"
+
+Card 2 — A2 Proposer:
+  accent bar: #8b5cf6 (violet)
+  stage number: bg #ede9fe, color #7c3aed
+  badge: bg #ede9fe, color #5b21b6, border #ddd6fe, text "LLM + RAG"
+  name: "A2 Proposer"
+  desc: "Reads profile, proposes 5-12 testable hypotheses via RAG"
+  input: "profile_json" → output: "Hypotheses"
+
+Card 3 — A3 Registrar:
+  accent bar: #ef4444 (red)
+  stage number: bg #fef2f2, color #ef4444
+  badge: bg #fef2f2, color #991b1b, border #fecaca, text "🔒 FREEZE"
+  name: "A3 Registrar"
+  desc: "SHA-256 locks the registry. No new hypotheses after this point."
+  input: "Hypotheses" → output: "Frozen ⟶ hash"
+
+Card 4 — A4 Executor:
+  accent bar: #f59e0b (amber)
+  stage number: bg #fffbeb, color #d97706
+  badge: bg #fff7ed, color #c2410c, border #fed7aa, text "LLM + REACT"
+  name: "A4 Executor"
+  desc: "Writes pandas code, sandboxed run, 3-attempt repair loop"
+  input: "Registry" → output: "raw_data"
+
+Card 5 — A5 Statistician:
+  accent bar: #10b981 (green)
+  stage number: bg #f0fdf4, color #10b981
+  badge: bg #f0fdf4, color #166534, border #bbf7d0, text "DETERMINISTIC"
+  name: "A5 Statistician"
+  desc: "BH-FDR across full family, effect sizes, licensed_text"
+  input: "raw_data" → output: "LedgerEntry"
+
+── CONNECTING ARROWS between cards ──
+Do NOT add visible arrows between cards in the carousel.
+The flow is implied by the card order + auto-scroll.
+Instead, add a subtle connector dot row below the cards:
+
+  Below carousel, centered:
+  display: flex, gap 8px, justify-content center, mt 8px
+
+  6 dots connected by lines:
+    Each dot: 8px circle
+    Colors matching each agent's accent color
+    Between dots: 1px line, color #e2e8f0, width 24px
+
+  This gives a minimal "step indicator" feel without clutter.
+
+═══════════════════════════════════════════════════════════
+GLOBAL FONT SHARPNESS FIX
+═══════════════════════════════════════════════════════════
+
+Add these to the global CSS (index.css):
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+For ALL headings (h1,h2,h3,h4) across the page:
+  font-weight: 700    ← change from 800 to 700 everywhere
+  letter-spacing: -0.03em
+
+For ALL body text, labels, badges:
+  font-weight: 400 or 500 (never 600+ for body)
+  letter-spacing: -0.01em
+
+For ALL overlines/badges:
+  font-weight: 600 (not 700)
+  letter-spacing: 0.10em
+
+This makes everything feel sharp, thin, editorial — not heavy.
+
+═══════════════════════════════════════════════════════════
+FOOTER — Complete Rewrite
+═══════════════════════════════════════════════════════════
+
+Replace the entire footer with this:
+
+Outer footer:
+  background: #0f172a
+  width: 100%
+  padding: 0
+
+── TOP FOOTER BAND ──
+  padding: 56px 0 48px
+  border-bottom: 1px solid rgba(255,255,255,0.06)
+
+  Inner container:
+    max-width: 1160px
+    margin: 0 auto
+    padding: 0 48px
+    display: grid
+    grid-template-columns: 2fr 1fr 1fr 1fr
+    gap: 48px
+    align-items: start
+
+    On tablet (max-width 768px): grid-template-columns: 1fr 1fr
+    On mobile (max-width 480px): grid-template-columns: 1fr
+
+  COLUMN 1 — Brand:
+    Logo row (flex, align-items center, gap 8px, mb 14px):
+      Logo mark: 32px × 32px, border-radius 8px
+        background: linear-gradient(135deg, #0d9488, #0f766e)
+        display flex, align-items center, justify-content center
+        white "L", font-size 15px, font-weight 800
+      Name: "Ledger"
+        color: white, font-size 18px, font-weight 700
+        letter-spacing: -0.02em
+
+    Tagline:
+      "The analyst that refuses to hallucinate."
+      color: rgba(255,255,255,0.45)
+      font-size: 13px
+      font-weight: 400
+      line-height: 1.6
+      margin-bottom: 20px
+      max-width: 220px
+
+    Built-by line:
+      color: rgba(255,255,255,0.3)
       font-size: 12px
-      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace
+      line-height: 1.6
+      "Built at NSUT · CSE · BTP 2023–27"
+      next line: "Dhruv Kumar · Rahul · Garv Bahl"
 
-      INPUT chip:
-        background: white
-        border: 1px solid #e2e8f0
-        border-radius: 6px
-        padding: 3px 10px
-        color: #475569
-        font-weight: 500
-        white-space: nowrap
+  COLUMN 2 — Project:
+    Column heading:
+      color: rgba(255,255,255,0.35)
+      font-size: 10px
+      font-weight: 700
+      letter-spacing: 0.12em
+      text-transform: uppercase
+      margin-bottom: 16px
 
-      Arrow: →
-        color: #0d9488
-        font-weight: 700
-        font-size: 14px
-        flex-shrink: 0
+    Links (each on its own line):
+      color: rgba(255,255,255,0.6)
+      font-size: 13px
+      font-weight: 400
+      line-height: 1
+      margin-bottom: 12px
+      display: block
+      text-decoration: none
+      cursor: pointer
+      transition: color 150ms ease
+      hover: color white
 
-      OUTPUT chip:
-        background: #f0fdfa
-        border: 1px solid #99f6e4
-        border-radius: 6px
-        padding: 3px 10px
-        color: #0d9488
-        font-weight: 600
-        white-space: nowrap
+    Links: About · Research Paper · Evaluation Protocol · GitHub
 
-Timeline stages data:
+  COLUMN 3 — Stack:
+    Heading: "STACK"
+    Links: FastAPI · LangGraph · Groq API · LangSmith · React + Vite · Supabase
 
-Stage 0: A0 Janitor | DETERMINISTIC
-  desc: "Type coercion, dedup, domain annotation (medical/financial/temporal)"
-  input: "Raw CSV bytes"
-  output: "cleaned_df + ColumnProfiles"
+  COLUMN 4 — Agents:
+    Heading: "AGENTS"
+    Links: A0 Janitor · A1 Profiler · A2 Proposer · A3 Registrar · 
+           A4 Executor · A5 Statistician
 
-Stage 1: A1 Profiler | DETERMINISTIC
-  desc: "Deep statistical summary: Shapiro-Wilk, Shannon entropy, outliers"
-  input: "cleaned_df"
-  output: "profile_json (8k chars)"
+── BOTTOM FOOTER BAR ──
+  padding: 20px 48px
+  max-width: 1160px
+  margin: 0 auto
+  display: flex
+  align-items: center
+  justify-content: space-between
 
-Stage 2: A2 Proposer | LLM + RAG
-  desc: "Reads profile + RAG context, proposes 5-12 strictly testable hypotheses"
-  input: "profile_json + RAG"
-  output: "HypothesisEntry list"
+  Left:
+    "© 2026 Ledger. NSUT Department of Computer Science & Engineering."
+    font-size: 12px
+    color: rgba(255,255,255,0.25)
+    font-weight: 400
 
-Stage 3: A3 Registrar 🔒 | DETERMINISTIC
-  desc: "SHA-256 freeze — registry is immutable after this. BH denominator locked."
-  input: "Hypothesis list"
-  output: "Frozen Registry + hash"
-  circle color: red (#ef4444)
+  Right (flex, gap 20px):
+    3 small links: "Privacy" · "Terms" · "Contact"
+    font-size: 12px
+    color: rgba(255,255,255,0.25)
+    hover: color rgba(255,255,255,0.6)
+    transition: 150ms ease
 
-Stage 4: A4 Executor | LLM + REACT
-  desc: "Writes pandas code, executes in sandbox, 3-attempt repair loop per hypothesis"
-  input: "Frozen Registry + schema"
-  output: "raw_data per hypothesis"
-
-Stage 5: A5 Statistician | DETERMINISTIC
-  desc: "Assumption checks, test selection, BH-FDR across full family, effect sizes"
-  input: "raw_data"
-  output: "LedgerEntry (SUPPORTED / NOT-SUPPORTED)"
-
-framer-motion on timeline:
-  Each row: initial {{opacity:0, x:-20}} animate {{opacity:1, x:0}}
-  Stagger: 0.12s between each row
-  Trigger: useInView on the timeline container
-  The vertical line: initial scaleY:0 → animate scaleY:1
-    transition: duration 1.2s, ease "easeOut"
-    transform-origin: top
+  On mobile: flex-direction column, gap 8px, text-align center
 
 ═══════════════════════════════════════════════════════════
 CRITICAL RULES
 ═══════════════════════════════════════════════════════════
 
-1. Feature cards MUST be 3 columns — use CSS Grid, not flexbox
-2. Timeline number circles MUST be fixed 56px — no shrinking
-3. All section max-widths enforced — nothing bleeds full screen width
-4. Stats row MUST be a 3-column grid with borders between cells
-5. Every card title LEFT aligned (not centered like the old version)
-6. No full-width buttons anywhere in these sections
-7. Input/output row uses monospace font for the chip text
-8. Do not add any dark backgrounds
-9. Responsive: cards go 2-col at 900px, 1-col at 600px
-          timeline stays single column at all sizes
-10. Use useInView from framer-motion for all scroll animations:
-    import {{ useInView }} from 'framer-motion'
-    const ref = useRef(null)
-    const isInView = useInView(ref, {{ once: true, margin: "-100px" }})
+1. Carousel auto-scrolls left continuously, pauses on hover
+2. Duplicate the 6 cards to [...agents, ...agents] for seamless loop
+3. Cards are 260px wide — fits ~4.5 visible on desktop, implying scroll
+4. NO vertical timeline at all — delete it completely
+5. Footer is 4-column grid — NOT raw stacked links
+6. Footer links are styled opacity elements, NOT raw blue href anchors
+7. Font globally: -webkit-font-smoothing antialiased everywhere
+8. All heading font-weight 700 max, body 400-500 max
+9. Footer bottom bar separates copyright (left) from links (right)
+10. No framer-motion needed on the carousel — CSS animation only
+    framer-motion only on the header text (fade in from below)

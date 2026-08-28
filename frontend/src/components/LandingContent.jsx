@@ -47,6 +47,93 @@ const Counter = ({ from = 0, to, duration = 1.5, isFloat = false, delay = 0 }) =
   return <span ref={nodeRef}>{isFloat || !Number.isInteger(from) ? from.toFixed(2) : from}</span>;
 };
 
+const pipelineStages = [
+  {
+    id: 0,
+    name: "A0 Janitor",
+    color: "#6366f1",
+    numBg: "#eef2ff",
+    numColor: "#6366f1",
+    badge: "DETERMINISTIC",
+    badgeBg: "#eef2ff",
+    badgeColor: "#4338ca",
+    badgeBorder: "#c7d2fe",
+    desc: "Type coercion, dedup, and rule-based domain annotation",
+    in: "Raw CSV",
+    out: "cleaned_df"
+  },
+  {
+    id: 1,
+    name: "A1 Profiler",
+    color: "#0d9488",
+    numBg: "#f0fdfa",
+    numColor: "#0d9488",
+    badge: "DETERMINISTIC",
+    badgeBg: "#f0fdfa",
+    badgeColor: "#0d9488",
+    badgeBorder: "#99f6e4",
+    desc: "Shapiro-Wilk, entropy, outlier detection. Zero LLM.",
+    in: "cleaned_df",
+    out: "profile_json"
+  },
+  {
+    id: 2,
+    name: "A2 Proposer",
+    color: "#8b5cf6",
+    numBg: "#ede9fe",
+    numColor: "#7c3aed",
+    badge: "LLM + RAG",
+    badgeBg: "#ede9fe",
+    badgeColor: "#5b21b6",
+    badgeBorder: "#ddd6fe",
+    desc: "Reads profile, proposes 5-12 testable hypotheses via RAG",
+    in: "profile_json",
+    out: "Hypotheses"
+  },
+  {
+    id: 3,
+    name: "A3 Registrar",
+    color: "#ef4444",
+    numBg: "#fef2f2",
+    numColor: "#ef4444",
+    badge: "🔒 FREEZE",
+    badgeBg: "#fef2f2",
+    badgeColor: "#991b1b",
+    badgeBorder: "#fecaca",
+    desc: "SHA-256 locks the registry. No new hypotheses after this point.",
+    in: "Hypotheses",
+    out: "Frozen ⟶ hash"
+  },
+  {
+    id: 4,
+    name: "A4 Executor",
+    color: "#f59e0b",
+    numBg: "#fffbeb",
+    numColor: "#d97706",
+    badge: "LLM + REACT",
+    badgeBg: "#fff7ed",
+    badgeColor: "#c2410c",
+    badgeBorder: "#fed7aa",
+    desc: "Writes pandas code, sandboxed run, 3-attempt repair loop",
+    in: "Registry",
+    out: "raw_data"
+  },
+  {
+    id: 5,
+    name: "A5 Statistician",
+    color: "#10b981",
+    numBg: "#f0fdf4",
+    numColor: "#10b981",
+    badge: "DETERMINISTIC",
+    badgeBg: "#f0fdf4",
+    badgeColor: "#166534",
+    badgeBorder: "#bbf7d0",
+    desc: "BH-FDR across full family, effect sizes, licensed_text",
+    in: "raw_data",
+    out: "LedgerEntry"
+  }
+];
+
 export default function LandingContent() {
   return (
     <div className="min-h-screen bg-[var(--color-bg)] font-sans text-[var(--color-navy)] selection:bg-[var(--color-accent-light)] selection:text-[var(--color-navy)] overflow-hidden">
@@ -359,107 +446,109 @@ export default function LandingContent() {
         </div>
       </section>
 
-      {/* 6. AGENT PIPELINE TIMELINE */}
-      <section className="bg-white py-[120px] px-[24px] w-full">
-        <div className="max-w-[780px] mx-auto">
-          <div className="text-center mb-[72px]">
-            <span className="text-[11px] font-bold tracking-[0.14em] text-[#0d9488] uppercase mb-[16px] block">
-              The Pipeline
-            </span>
-            <h2 className="text-[clamp(28px,3.5vw,44px)] font-extrabold text-[#0f172a] tracking-[-0.03em] m-0">
-              The 6-Stage Autonomous State Machine
-            </h2>
-            <p className="mt-[12px] text-[16px] text-[#64748b] leading-[1.7] max-w-[600px] mx-auto">
-              A rigid, inspectable LangGraph pipeline where every transition is a correctness property — not a suggestion.
-            </p>
+      {/* 6. AGENT CARDS (Horizontal Auto-Scroll Carousel) */}
+      <section className="bg-white py-[100px] w-full overflow-hidden">
+        <div className="max-w-[780px] mx-auto mb-[56px] px-[24px] text-center">
+          <span className="text-[11px] font-semibold tracking-[0.14em] text-[#0d9488] uppercase block mb-[14px]">
+            The Pipeline
+          </span>
+          <h2 className="text-[clamp(26px,3vw,38px)] font-bold text-[#0f172a] tracking-[-0.03em] leading-[1.2] m-0 mb-[12px]">
+            The 6-Stage Autonomous State Machine
+          </h2>
+          <p className="text-[15px] font-normal text-[#94a3b8] leading-[1.6] tracking-[-0.01em]">
+            A rigid, inspectable LangGraph pipeline where every transition is a correctness property — not a suggestion.
+          </p>
+        </div>
+
+        <div className="relative w-full">
+          {/* Left Fade */}
+          <div className="absolute left-0 top-0 bottom-0 w-[80px] bg-gradient-to-r from-white to-transparent z-[2] pointer-events-none" />
+          {/* Right Fade */}
+          <div className="absolute right-0 top-0 bottom-0 w-[80px] bg-gradient-to-l from-white to-transparent z-[2] pointer-events-none" />
+
+          {/* Scrolling Track */}
+          <div className="flex gap-[20px] px-[80px] pt-[20px] pb-[32px] overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing hide-scrollbar animate-autoScroll hover:animate-pause">
+            <style dangerouslySetInnerHTML={{__html: `
+              .hide-scrollbar::-webkit-scrollbar { display: none; }
+              .hide-scrollbar { scrollbar-width: none; }
+              @keyframes autoScroll {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+              }
+              .animate-autoScroll {
+                animation: autoScroll 30s linear infinite;
+              }
+              .animate-autoScroll:hover {
+                animation-play-state: paused;
+              }
+            `}} />
+
+            {/* Duplicate the array for seamless loop */}
+            {[...pipelineStages, ...pipelineStages].map((stage, i) => (
+              <div 
+                key={i} 
+                className="group min-w-[260px] max-w-[260px] bg-white border border-[#e2e8f0] rounded-[18px] p-[24px_22px] flex flex-col gap-0 shrink-0 relative overflow-hidden transition-all duration-[280ms] ease-out cursor-default hover:-translate-y-[8px] hover:shadow-[0_20px_48px_rgba(13,148,136,0.13),0_4px_12px_rgba(0,0,0,0.06)] hover:border-[#99f6e4]"
+              >
+                {/* Top Accent Bar */}
+                <div 
+                  className="absolute top-0 left-0 right-0 h-[3px] rounded-[18px_18px_0_0]"
+                  style={{ backgroundColor: stage.color }}
+                />
+
+                {/* STAGE NUMBER + BADGE */}
+                <div className="flex items-center justify-between mb-[18px] mt-[6px]">
+                  <div 
+                    className="w-[32px] h-[32px] rounded-[8px] flex items-center justify-center text-[13px] font-bold tracking-[-0.02em]"
+                    style={{ backgroundColor: stage.numBg, color: stage.numColor }}
+                  >
+                    {stage.id}
+                  </div>
+                  <div 
+                    className="font-bold text-[9px] tracking-[0.08em] uppercase px-[9px] py-[3px] rounded-[100px] border"
+                    style={{ backgroundColor: stage.badgeBg, color: stage.badgeColor, borderColor: stage.badgeBorder }}
+                  >
+                    {stage.badge}
+                  </div>
+                </div>
+
+                {/* AGENT NAME */}
+                <h4 className="text-[15px] font-bold text-[#0f172a] tracking-[-0.03em] leading-[1.2] mb-[8px]">
+                  {stage.name}
+                </h4>
+
+                {/* DESCRIPTION */}
+                <p className="text-[12.5px] font-normal text-[#64748b] leading-[1.6] tracking-[-0.01em] flex-grow mb-[16px]">
+                  {stage.desc}
+                </p>
+
+                {/* INPUT -> OUTPUT */}
+                <div className="flex items-center gap-[6px] p-[8px_10px] bg-[#f8fafc] rounded-[8px] border border-[#f1f5f9]">
+                  <span className="text-[10px] font-medium text-[#94a3b8] font-mono whitespace-nowrap overflow-hidden text-ellipsis max-w-[85px]">
+                    {stage.in}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#0d9488] shrink-0">
+                    →
+                  </span>
+                  <span className="text-[10px] font-semibold text-[#0d9488] font-mono whitespace-nowrap overflow-hidden text-ellipsis max-w-[95px]">
+                    {stage.out}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Connecting Dots below */}
+          <div className="flex justify-center items-center gap-[8px] mt-[8px]">
+            {pipelineStages.map((stage, i) => (
+              <React.Fragment key={i}>
+                <div className="w-[8px] h-[8px] rounded-full" style={{ backgroundColor: stage.color }} />
+                {i < pipelineStages.length - 1 && (
+                  <div className="w-[24px] h-[1px] bg-[#e2e8f0]" />
+                )}
+              </React.Fragment>
+            ))}
           </div>
 
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={{
-              visible: { transition: { staggerChildren: 0.12 } },
-              hidden: {}
-            }}
-            className="relative flex flex-col gap-0"
-          >
-            {/* Center vertical line */}
-            <motion.div 
-              variants={{
-                hidden: { scaleY: 0 },
-                visible: { scaleY: 1, transition: { duration: 1.2, ease: "easeOut" } }
-              }}
-              className="absolute left-[28px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-[#0d9488] to-[#ccfbf1] z-0 origin-top"
-            />
-
-            {[
-              { id: 0, name: "A0 Janitor", type: "DETERMINISTIC", desc: "Type coercion, dedup, domain annotation (medical/financial/temporal)", in: "Raw CSV bytes", out: "cleaned_df + ColumnProfiles" },
-              { id: 1, name: "A1 Profiler", type: "DETERMINISTIC", desc: "Deep statistical summary: Shapiro-Wilk, Shannon entropy, outliers", in: "cleaned_df", out: "profile_json (8k chars)" },
-              { id: 2, name: "A2 Proposer", type: "LLM + RAG", desc: "Reads profile + RAG context, proposes 5-12 strictly testable hypotheses", in: "profile_json + RAG", out: "HypothesisEntry list" },
-              { id: 3, name: "A3 Registrar 🔒", type: "DETERMINISTIC", desc: "SHA-256 freeze — registry is immutable after this. BH denominator locked.", in: "Hypothesis list", out: "Frozen Registry + hash", special: true },
-              { id: 4, name: "A4 Executor", type: "LLM + REACT", desc: "Writes pandas code, executes in sandbox, 3-attempt repair loop per hypothesis", in: "Frozen Registry + schema", out: "raw_data per hypothesis" },
-              { id: 5, name: "A5 Statistician", type: "DETERMINISTIC", desc: "Assumption checks, test selection, BH-FDR across full family, effect sizes", in: "raw_data", out: "LedgerEntry (SUPPORTED / NOT-SUPPORTED)" },
-            ].map((stage, i) => (
-              <motion.div 
-                key={stage.id} 
-                variants={{
-                  hidden: { opacity: 0, x: -20 },
-                  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } }
-                }}
-                className="flex items-start gap-[24px] relative pb-[40px] last:pb-0"
-              >
-                {/* LEFT - Number Circle */}
-                <div 
-                  className={`w-[56px] h-[56px] min-w-[56px] rounded-full flex items-center justify-center text-white text-[18px] font-extrabold relative z-10 border-[3px] border-white
-                    ${stage.special 
-                      ? 'bg-[#ef4444] shadow-[0_0_0_2px_#ef4444,0_4px_12px_rgba(239,68,68,0.3)]' 
-                      : 'bg-[#0d9488] shadow-[0_0_0_2px_#0d9488,0_4px_12px_rgba(13,148,136,0.3)]'
-                    }`}
-                >
-                  {stage.id}
-                </div>
-
-                {/* RIGHT - Content Card */}
-                <div className="flex-1 bg-white border border-[#e2e8f0] rounded-[16px] px-[28px] py-[24px] transition-all duration-250 hover:border-[#99f6e4] hover:shadow-[0_8px_24px_rgba(13,148,136,0.08)] hover:translate-x-[4px]">
-                  
-                  {/* TOP ROW */}
-                  <div className="flex items-center gap-[10px] mb-[10px] flex-wrap">
-                    <span className="text-[17px] font-bold text-[#0f172a] tracking-[-0.02em]">
-                      {stage.name}
-                    </span>
-                    <span 
-                      className={`inline-flex items-center rounded-[100px] px-[10px] py-[3px] text-[10px] font-bold tracking-[0.07em] uppercase border ${
-                        stage.type === 'DETERMINISTIC' ? 'bg-[#f0fdfa] text-[#0d9488] border-[#99f6e4]' :
-                        stage.type === 'LLM' ? 'bg-[#fffbeb] text-[#92400e] border-[#fde68a]' :
-                        stage.type === 'LLM + RAG' ? 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]' :
-                        'bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]'
-                      }`}
-                    >
-                      {stage.type}
-                    </span>
-                  </div>
-
-                  {/* DESCRIPTION */}
-                  <p className="text-[14px] text-[#64748b] mb-[14px] leading-[1.6]">
-                    {stage.desc}
-                  </p>
-
-                  {/* INPUT -> OUTPUT ROW */}
-                  <div className="flex items-center gap-[10px] px-[14px] py-[10px] bg-[#f8fafc] rounded-[10px] border border-[#e2e8f0] text-[12px] font-mono flex-wrap">
-                    <span className="bg-white border border-[#e2e8f0] rounded-[6px] px-[10px] py-[3px] text-[#475569] font-medium whitespace-nowrap">
-                      {stage.in}
-                    </span>
-                    <span className="text-[#0d9488] font-bold text-[14px] shrink-0">→</span>
-                    <span className="bg-[#f0fdfa] border border-[#99f6e4] rounded-[6px] px-[10px] py-[3px] text-[#0d9488] font-semibold whitespace-nowrap">
-                      {stage.out}
-                    </span>
-                  </div>
-
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
@@ -485,40 +574,80 @@ export default function LandingContent() {
       </section>
 
       {/* 8. FOOTER */}
-      <footer className="bg-[#0f172a] pt-[48px] pb-[32px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+      <footer className="bg-[#0f172a] w-full p-0">
+        {/* TOP FOOTER BAND */}
+        <div className="pt-[56px] pb-[48px] border-b border-white/[0.06]">
+          <div className="max-w-[1160px] mx-auto px-[48px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] gap-[48px] items-start">
             
-            <div className="flex flex-col items-start gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-sm bg-white" />
-                <span className="font-extrabold text-[20px] tracking-tight text-white">Ledger</span>
+            {/* COLUMN 1 — Brand */}
+            <div>
+              <div className="flex items-center gap-[8px] mb-[14px]">
+                <div className="w-[32px] h-[32px] rounded-[8px] bg-gradient-to-br from-[#0d9488] to-[#0f766e] flex items-center justify-center">
+                  <span className="text-white text-[15px] font-extrabold">L</span>
+                </div>
+                <span className="text-white text-[18px] font-bold tracking-[-0.02em]">
+                  Ledger
+                </span>
               </div>
-              <p className="text-white/50 text-[13px] max-w-[200px]">
+              <p className="text-white/[0.45] text-[13px] font-normal leading-[1.6] mb-[20px] max-w-[220px]">
                 The analyst that refuses to hallucinate.
               </p>
+              <div className="text-white/30 text-[12px] leading-[1.6]">
+                <p>Built at NSUT · CSE · BTP 2023–27</p>
+                <p>Dhruv Kumar · Rahul · Garv Bahl</p>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {['About', 'GitHub', 'Research Paper', 'Evaluation Protocol'].map(link => (
-                <a key={link} href="#" className="text-white/60 text-[13px] hover:text-white transition-colors">
+            {/* COLUMN 2 — Project */}
+            <div>
+              <h4 className="text-white/[0.35] text-[10px] font-bold tracking-[0.12em] uppercase mb-[16px]">
+                Project
+              </h4>
+              {['About', 'Research Paper', 'Evaluation Protocol', 'GitHub'].map(link => (
+                <a key={link} className="text-white/60 text-[13px] font-normal leading-[1] mb-[12px] block text-decoration-none cursor-pointer transition-colors duration-150 hover:text-white">
                   {link}
                 </a>
               ))}
             </div>
 
-            <div className="flex flex-col gap-1 text-white/50 text-[12px] leading-relaxed">
-              <p>Built at NSUT</p>
-              <p>CSE Dept. · BTP 2023–27</p>
-              <p className="mt-2 text-white/40">Dhruv Kumar · Rahul · Garv Bahl</p>
+            {/* COLUMN 3 — Stack */}
+            <div>
+              <h4 className="text-white/[0.35] text-[10px] font-bold tracking-[0.12em] uppercase mb-[16px]">
+                Stack
+              </h4>
+              {['FastAPI', 'LangGraph', 'Groq API', 'LangSmith', 'React + Vite', 'Supabase'].map(link => (
+                <a key={link} className="text-white/60 text-[13px] font-normal leading-[1] mb-[12px] block text-decoration-none cursor-pointer transition-colors duration-150 hover:text-white">
+                  {link}
+                </a>
+              ))}
+            </div>
+
+            {/* COLUMN 4 — Agents */}
+            <div>
+              <h4 className="text-white/[0.35] text-[10px] font-bold tracking-[0.12em] uppercase mb-[16px]">
+                Agents
+              </h4>
+              {['A0 Janitor', 'A1 Profiler', 'A2 Proposer', 'A3 Registrar', 'A4 Executor', 'A5 Statistician'].map(link => (
+                <a key={link} className="text-white/60 text-[13px] font-normal leading-[1] mb-[12px] block text-decoration-none cursor-pointer transition-colors duration-150 hover:text-white">
+                  {link}
+                </a>
+              ))}
             </div>
 
           </div>
+        </div>
 
-          <div className="border-t border-white/10 pt-8 text-center">
-            <p className="text-white/40 text-[12px]">
-              © 2026 Ledger. NSUT Department of Computer Science.
-            </p>
+        {/* BOTTOM FOOTER BAR */}
+        <div className="py-[20px] px-[48px] max-w-[1160px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-[8px] text-center sm:text-left">
+          <div className="text-[12px] text-white/25 font-normal">
+            © 2026 Ledger. NSUT Department of Computer Science & Engineering.
+          </div>
+          <div className="flex gap-[20px]">
+            {['Privacy', 'Terms', 'Contact'].map(link => (
+              <a key={link} className="text-[12px] text-white/25 hover:text-white/60 transition-colors duration-150 cursor-pointer text-decoration-none">
+                {link}
+              </a>
+            ))}
           </div>
         </div>
       </footer>
