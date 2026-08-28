@@ -1,114 +1,24 @@
-@import "tailwindcss";
-
-@theme {
-  --color-aivora-bg: #030303;
-  --color-aivora-surface: #0b0b0c;
-  --color-aivora-card: rgba(20, 20, 20, 0.4);
-  --color-aivora-border: rgba(255, 255, 255, 0.08);
-  --color-aivora-border-light: rgba(255, 255, 255, 0.15);
-  --color-aivora-accent: #0ea5e9;
-  --color-aivora-accent-green: #10b981;
-  
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
+  :root {
+    --color-bg: #f0fdfa;
+    --color-surface: #ffffff;
+    --color-border: #ccfbf1;
+    --color-accent: #0d9488;
+    --color-accent-light: #99f6e4;
+    --color-navy: #0f172a;
+    --color-muted: #64748b;
+    --font-sans: 'Inter', system-ui, sans-serif;
+  }
+
   body {
-    @apply bg-aivora-bg text-[#f5f5f5] font-sans antialiased min-h-screen overflow-x-hidden;
-    /* Layer 1 & 3: Intense top-center radial light to reveal the grid, fading into deep black */
-    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 30%, rgba(3,3,3,1) 70%);
-    background-attachment: fixed;
-    letter-spacing: -0.01em;
+    background-color: var(--color-bg);
+    color: var(--color-navy);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-
-  /* Layer 2: Architectural Grid System */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: -1;
-    background-image: 
-      /* Random-looking filled blocks for the checkerboard architectural effect */
-      linear-gradient(45deg, rgba(255,255,255,0.01) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.01) 75%, rgba(255,255,255,0.01)),
-      linear-gradient(45deg, rgba(255,255,255,0.01) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.01) 75%, rgba(255,255,255,0.01)),
-      /* The 1px grid lines */
-      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    
-    background-size: 
-      128px 128px, 
-      128px 128px,
-      64px 64px, 
-      64px 64px;
-      
-    background-position: 
-      0 0, 
-      64px 64px, 
-      center top, 
-      center top;
-      
-    /* Fade grid towards edges and bottom to blend naturally */
-    mask-image: radial-gradient(ellipse at 50% 10%, black 10%, transparent 80%);
-    -webkit-mask-image: radial-gradient(ellipse at 50% 10%, black 10%, transparent 80%);
-  }
-}
-
-@layer utilities {
-  /* Layer 6: Floating Cards / Glass System (Updated to perfectly match Aivora) */
-  .aivora-card {
-    @apply bg-aivora-card backdrop-blur-[16px] border border-aivora-border rounded-xl shadow-[0_30px_60px_rgba(0,0,0,0.6)];
-    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .aivora-card:hover {
-    @apply border-aivora-border-light shadow-[0_40px_80px_rgba(0,0,0,0.8)];
-    transform: translateY(-2px);
-  }
-  
-  /* Primary CTA Button (minimal outlined style) */
-  .btn-primary {
-    @apply px-7 py-3 bg-[#0d0d0d] hover:bg-[#1a1a1a] border border-white/10 hover:border-white/30 
-           rounded-[10px] transition-all duration-300 text-[15px] font-medium text-white 
-           shadow-[inset_0_1px_0_rgba(255,255,255,0.05),_0_0_30px_rgba(0,0,0,0.6)];
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-b from-[#ffffff] to-[#666666];
-  }
-  
-  /* Minimal scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent; 
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1); 
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.2); 
-  }
-}
-
-/* React Flow Overrides */
-.react-flow__node {
-  @apply rounded-xl border-0 !bg-transparent;
-}
-.react-flow__handle {
-  @apply !w-2 !h-2 !border-[1.5px] !border-[#050505] !bg-[#a0a0a0];
-}
-.react-flow__edge-path {
-  stroke: rgba(255, 255, 255, 0.15);
-  stroke-width: 1px;
-}
-.react-flow__edge.animated .react-flow__edge-path {
-  stroke: var(--color-aivora-accent);
-  stroke-width: 1.5px;
-  filter: drop-shadow(0 0 4px rgba(14, 165, 233, 0.6));
 }
